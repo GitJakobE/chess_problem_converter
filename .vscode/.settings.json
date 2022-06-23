@@ -1,0 +1,12 @@
+{
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.languageServer": "Pylance",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+      "reportGeneralTypeIssues": "warning"
+    }
+  }
