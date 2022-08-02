@@ -8,12 +8,12 @@ from pdf2image import convert_from_path
 
 
 templates = ['wpawn.png', 'whorse.png', 'bpawn.png', 'bhorse.png']
-source_image = "data\Toft-00-0252.png" if len(sys.argv)<2 else sys.argv[1];
+source_image = "data/Toft-00-0252.png" if len(sys.argv)<2 else sys.argv[1];
 debug =True
 # Main function 
 def main():
     #import an pdf and convert its content to pngs
-    convert_pdf_to_pngs("D:\Skakproblemopgaver\\frasoren\chess\chess\data\data\Toft-00")
+    convert_pdf_to_pngs("data/Toft-00/Toft-00-0000.pdf")
 
     # import, convert to grayscale and binarize
     image = cv2.imread(source_image)
@@ -21,9 +21,9 @@ def main():
     red_channel = image[:,:,0]
     green_channel = image[:,:,1]
     if(debug==True):
-        cv2.imwrite('blue_image.png', blue_channel)
-        cv2.imwrite('red_image.png', red_channel)
-        cv2.imwrite('green_image.png', green_channel)
+        cv2.imwrite('out/blue_image.png', blue_channel)
+        cv2.imwrite('out/red_image.png', red_channel)
+        cv2.imwrite('out/green_image.png', green_channel)
 
     blue_img = np.zeros(image.shape)
     blue_img[:,:,0] = blue_channel
@@ -31,7 +31,7 @@ def main():
     
     retval, image_gray = cv2.threshold(blue_channel, 128, 256, cv2.THRESH_BINARY)
     if(debug==True):
-        cv2.imwrite('grayimage.png', image_gray)
+        cv2.imwrite('out/grayimage.png', image_gray)
     # fig, ax = plt.subplots()
     # im = ax.imshow(image)
     # # plt.show()
@@ -214,4 +214,5 @@ def fill_templates_in_grid(grid, bounding_box, template_locations):
     return grid;
 
 # Run the program          
-main();
+if __name__ == "__main__":
+    main()
