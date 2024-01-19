@@ -13,7 +13,7 @@ debug = True
 # Main function
 def main():
     # import a pdf and convert its content to pngs
-    Util.convert_pdf_to_pngs("D:\Skakproblemopgaver\\frasoren\chess\chess\data\data\Toft-00")
+    # Util.convert_pdf_to_pngs(r"D:\Skakproblemopgaver\frasoren\chess\chess\data\data\Toft-00\Toft-00-0018.pdf")
 
     # import, convert to grayscale and binarize
     image = cv.imread(source_image)

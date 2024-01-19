@@ -8,7 +8,7 @@ class Util:
     @staticmethod
     def locate_templates(image_gray):
         """ Locate points where the templates appear in image_gray"""
-        templates = ['wpawn.png', 'whorse.png', 'bpawn.png', 'bhorse.png']
+        templates = ['data\wpawn.png', 'data\whorse.png', 'data\bpawn.png', 'data\bhorse.png']
         locations = []
         for template_name in templates:
             template = cv.imread(template_name)
@@ -21,12 +21,13 @@ class Util:
         return locations
 
     @staticmethod
-    def convert_pdf_to_pngs(filename: str) -> None:
-        pages = convert_from_path(filename, 500)
+    def convert_pdf_to_pngs(path: str) -> None:
+
+        pages = convert_from_path(path, 500)
         n = 0
-        filename = str.replace(filename, ".pdf", "")
+        filname = str.replace(path, ".pdf", "")
         for page in pages:
-            page.save(f"{filename}--{n}.png")
+            page.save(f"{filname}--{n}.png")
             n += 1
 
     @staticmethod
