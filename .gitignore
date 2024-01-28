@@ -3,3 +3,5 @@ data/data/
 out/*
 out/board/*
 .venv
+.vscode
+.pytest_cache
