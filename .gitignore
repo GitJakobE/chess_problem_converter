@@ -2,3 +2,4 @@ data/data/
 */.vscode/
 out/*
 out/board/*
+.venv

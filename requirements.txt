@@ -1,0 +1,9 @@
+python-poppler
+matplotlib
+numpy
+pandas
+opencv-python
+opencv-contrib-python
+pdf2image
+pytest
+black
