@@ -1,4 +1,4 @@
-python-poppler
+#python-poppler
 matplotlib
 numpy
 pandas
