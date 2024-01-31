@@ -1,3 +1,8 @@
-data/
+data/data/
 */.vscode/
 .idea/*
+out/*
+out/board/*
+.venv
+.vscode
+.pytest_cache
