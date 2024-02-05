@@ -6,3 +6,13 @@ out/board/*
 .venv
 .vscode
 .pytest_cache
+.models/
+.traningset/
+/trainingset/
+/trainingset/Bishop/
+/trainingset/Empty/
+/trainingset/King/
+/trainingset/Knight/
+/trainingset/Pawn/
+/trainingset/Queen/
+/trainingset/Rock/

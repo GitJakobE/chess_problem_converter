@@ -2,30 +2,44 @@ import cv2 as cv
 import numpy as np
 from math import pi
 from pdf2image import convert_from_path
+from loguru import logger
 from scipy.ndimage import gaussian_filter, rotate
 from pathlib import Path
+from sklearn import pipeline
 
 from chess_problem_converter.config import BoardConfig
 
 
 class Util:
     @staticmethod
-    def print_board(board: np.ndarray, conf: BoardConfig, only_pieces: bool = False) -> None:
+    def print_tiles(board: np.ndarray, conf: BoardConfig, classifier: pipeline = None) -> None:
         _, board_width, _ = board.shape
         tile_width = board_width // 8
         tol = 3
         std_threshold = 15
 
-        cv.imwrite(f'{conf.export.output_str}_board.png', board)
+
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
                 tile = board[board_width + tol - (y + 1) * tile_width:board_width - tol - y * tile_width,
                        tile_width * n + tol:tile_width * (1 + n) - tol]
-                if (only_pieces):
+                if (conf.only_pieces):
                     if std_threshold > np.std(gaussian_filter(tile, 5)):
                         continue
+                if classifier is not None:
+                    predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1,-1))[0]
+                    predicted = conf.predict_dict[predicted]
+                    color = predicted.split("_")[0]
+                    piece = predicted.split("_")[1]
+                    cv.imwrite(f'out/{piece}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png', tile)
+                else:
+                    cv.imwrite(f'{conf.export.output_str}_{letter}{y + 1}.png', tile)
 
-                cv.imwrite(f'{conf.export.output_str}_{letter}{y + 1}.png', tile)
+    @staticmethod
+    def img_to_parameter(img: np.array):
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        resized_gray = cv.resize(gray, (32, 32), interpolation=cv.INTER_LINEAR)
+        return resized_gray.reshape(-1)
 
     @staticmethod
     def find_top_line(image, left_edge, right_edge, tile_width):

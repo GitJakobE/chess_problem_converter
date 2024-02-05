@@ -7,3 +7,4 @@ opencv-contrib-python
 pdf2image
 pytest
 black
+scikit-learn
