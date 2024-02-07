@@ -125,7 +125,7 @@ class Util:
         return pos_left, pos_right
 
     @staticmethod
-    def find_edge(image, line_profile_width=300, gaussian_sigma=5, tilt_range=10):
+    def find_tilt_angle(image, line_profile_width=300, gaussian_sigma=5, tilt_range=10):
         height, width, _ = image.shape
         h_line_profile_width = line_profile_width // 2
         edge_tol = 10

@@ -15,13 +15,14 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-source_image = "data\Toft-00-0051.png" if len(sys.argv) < 2 else sys.argv[1]
+source_image = "data\Toft-00-0174.png" if len(sys.argv) < 2 else sys.argv[1]
 
 
 # Main function
 def main():
     conf = BoardConfig()
     conf.read_predict_dict()
+    logger.add("out/log.log")
 
     source_images = [filename.path for filename in os.scandir("data/") if filename.path.endswith(".png")]
 
@@ -32,15 +33,15 @@ def main():
         logger.info(f"{source_image}: Printing board")
         cv.imwrite(f'{conf.export.output_str}_image_org.png', image)
 
+        image = Util.remove_black_writing(image)
         # find the tilt of the board
-        right_tilt_angle, left_tilt_angle = Util.find_edge(image, conf.line_profile_width, conf.gaussian_sigma, 10)
-        rotated_image = rotate(image, (right_tilt_angle + left_tilt_angle) / 2, reshape=False)
+        right_tilt_angle, left_tilt_angle = Util.find_tilt_angle(image, conf.line_profile_width, conf.gaussian_sigma, 10)
+        image = rotate(image, (right_tilt_angle + left_tilt_angle) / 2, reshape=False)
 
         # find the edges of the board
-        left_edge, right_edge = Util.find_board_edges(rotated_image, conf.line_profile_width, conf.gaussian_sigma,
+        left_edge, right_edge = Util.find_board_edges(image, conf.line_profile_width, conf.gaussian_sigma,
                                                       conf.approx_board)
         logger.info(f"{source_image}: Left_edge: {left_edge}, Right_edge:{right_edge}")
-        image = Util.remove_black_writing(rotated_image)
         cv.imwrite(f'{conf.export.output_str}_full_rotated.png', image)
         logger.info(f"{source_image}: Printing full rotated board")
 
