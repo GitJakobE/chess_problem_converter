@@ -13,6 +13,7 @@ from chess_problem_converter.config import BoardConfig
 class Util:
     @staticmethod
     def print_tiles(board: np.ndarray, conf: BoardConfig, classifier: pipeline = None) -> None:
+        logger.debug(f"Printing tiles ")
         _, board_width, _ = board.shape
         tile_width = board_width // 8
         tol = 3
