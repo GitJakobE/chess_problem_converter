@@ -13,8 +13,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 
-class data_model:
-
+class DataModel:
 
     @staticmethod
     def train_from_images():
@@ -23,30 +22,11 @@ class data_model:
         piece_lib_dict = {x[0].split('\\')[-1] + "_" + x[0].split('\\')[-2]: x[0] for x in os.walk(training_lib) if
                           len(x[0].split("\\")) > 2}
 
-        kernels = np.array([np.zeros((5, 5), np.int8) for i in range(25)])
-        for x in range(5):
-            for y in range(5):
-                kernels[x * 5 + y][x][y] = 1
-
         all_pieces = {}
         for pieces, lib in piece_lib_dict.items():
             all_pieces[pieces] = [cv.cvtColor(cv.imread(f.path), cv.COLOR_BGR2GRAY) for f in os.scandir(lib) if
                                   f.is_file()]
-            # grow the dataset:
 
-            # rotate +/- 4 degrees
-            grown_data = []
-            for deg in range(-4, 5):
-                for img in all_pieces[pieces]:
-                    grown_data.append(rotate(img, deg, reshape=False))
-            all_pieces[pieces] = grown_data
-            grown_data = []
-            # move +/-4 pixels
-            for img in all_pieces[pieces]:
-                for kernel in kernels:
-                    grown_data.append(cv.filter2D(src=img, ddepth=-1, kernel=kernel))
-
-            all_pieces[pieces] = [cv.resize(image, (32, 32), interpolation=cv.INTER_LINEAR) for image in grown_data]
             # think about making it a binary image
             # th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,11,2)
         print(all_pieces)
@@ -88,3 +68,31 @@ class data_model:
             print(f"{name} : {score}")
             with open(f'models/{name}.pkl', 'wb') as f:  # open a text file
                 pickle.dump(clf, f)  # serialize the list
+
+    @staticmethod
+    def grow_dataset(images: list[np.ndarray]) -> list[np.ndarray]:
+
+        kernels = DataModel.create_shift_kernels(5)
+
+        # rotate +/- 4 degrees
+        images = DataModel.grow_though_rotate(images, 4)
+        grown_data = []
+        # move +/-4 pixels
+        for img in images:
+            for kernel in kernels:
+                grown_data.append(cv.filter2D(src=img, ddepth=-1, kernel=kernel))
+
+        return [cv.resize(image, (32, 32), interpolation=cv.INTER_LINEAR) for image in grown_data]
+
+    @staticmethod
+    def create_shift_kernels(size: int) -> np.ndarray:
+        """returns the kernels used to shift the image one pixel in all directions (incl no directions)"""
+        kernels = np.array([np.zeros((size, size), np.int8) for i in range(size * size)])
+        for x in range(size):
+            for y in range(size):
+                kernels[x * size + y][x][y] = 1
+        return kernels
+
+    @staticmethod
+    def grow_though_rotate(images: list[np.ndarray], angle: int) -> list[np.ndarray]:
+        return [rotate(img, deg, reshape=False) for img in images for deg in range(-angle, angle + 1)]
