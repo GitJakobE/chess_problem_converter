@@ -12,11 +12,25 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
+names = [
+    "Nearest Neighbors",
+    "Random Forest",
+    "Neural Net",
+]
+classifiers = [
+    KNeighborsClassifier(3),
+    RandomForestClassifier(
+        max_depth=5, n_estimators=10, max_features=1, random_state=42
+    ),
+    MLPClassifier(alpha=1, max_iter=1000, random_state=42),
+]
+
 
 class DataModel:
 
     @staticmethod
     def train_from_images():
+        tile_size = 32
         logger.debug("starting training:")
         training_lib = "trainingset"
         piece_lib_dict = {x[0].split('\\')[-1] + "_" + x[0].split('\\')[-2]: x[0] for x in os.walk(training_lib) if
@@ -26,63 +40,29 @@ class DataModel:
         for pieces, lib in piece_lib_dict.items():
             all_pieces[pieces] = [cv.cvtColor(cv.imread(f.path), cv.COLOR_BGR2GRAY) for f in os.scandir(lib) if
                                   f.is_file()]
-
-            # think about making it a binary image
-            # th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,11,2)
-        print(all_pieces)
-        data = []
-        classification = []
-        n = 0
+            all_pieces[pieces] = DataModel.grow_dataset(all_pieces[pieces])
+            all_pieces[pieces] = [cv.resize(image, (tile_size, tile_size), interpolation=cv.INTER_LINEAR) for image in
+                                  all_pieces[pieces]]
 
         with open(f'piece_lib_dict.pkl', 'wb') as f:  # open a text file
             pickle.dump({type_nr: piece_type for type_nr, piece_type in enumerate(piece_lib_dict.keys())}, f)
-        for type_nr, piece_type in enumerate(piece_lib_dict.keys()):
-            for piece in all_pieces[piece_type]:
-                data.append(piece.reshape(-1))
-                classification.append(type_nr)
-                n += 1
-                cv.imwrite(f'trainingset/{piece_type}_{type_nr}/{n}.png', piece)
 
-        # serialize the list
-        print(len(data))
+        data, classification = DataModel.dict_to_datasets(piece_lib_dict=piece_lib_dict, all_pieces=all_pieces)
 
-        X_train, X_test, y_train, y_test = train_test_split(data, classification, test_size=0.5, shuffle=True)
-        # clf = svm.SVC(gamma=0.001)
-        names = [
-            "Nearest Neighbors",
-            "Random Forest",
-            "Neural Net",
-        ]
-        classifiers = [
-            KNeighborsClassifier(3),
-            KNeighborsClassifier(3),
-            RandomForestClassifier(
-                max_depth=5, n_estimators=10, max_features=1, random_state=42
-            ),
-            MLPClassifier(alpha=1, max_iter=1000, random_state=42),
-        ]
+        x_train, x_test, y_train, y_test = train_test_split(data, classification, test_size=0.5, shuffle=True)
+
+        DataModel.train_models(x_train, y_train)
+
         for name, clf in zip(names, classifiers):
-            clf = make_pipeline(StandardScaler(), clf)
-            clf.fit(X_train, y_train)
-            score = clf.score(X_test, y_test)
+            score = clf.score(x_test, y_test)
             print(f"{name} : {score}")
-            with open(f'models/{name}.pkl', 'wb') as f:  # open a text file
-                pickle.dump(clf, f)  # serialize the list
 
     @staticmethod
     def grow_dataset(images: list[np.ndarray]) -> list[np.ndarray]:
 
         kernels = DataModel.create_shift_kernels(5)
-
-        # rotate +/- 4 degrees
-        images = DataModel.grow_though_rotate(images, 4)
-        grown_data = []
-        # move +/-4 pixels
-        for img in images:
-            for kernel in kernels:
-                grown_data.append(cv.filter2D(src=img, ddepth=-1, kernel=kernel))
-
-        return [cv.resize(image, (32, 32), interpolation=cv.INTER_LINEAR) for image in grown_data]
+        images = DataModel.grow_though_rotate(images=images, angle=4)
+        return DataModel.grow_though_kernels(images=images, kernels=kernels)
 
     @staticmethod
     def create_shift_kernels(size: int) -> np.ndarray:
@@ -96,3 +76,25 @@ class DataModel:
     @staticmethod
     def grow_though_rotate(images: list[np.ndarray], angle: int) -> list[np.ndarray]:
         return [rotate(img, deg, reshape=False) for img in images for deg in range(-angle, angle + 1)]
+
+    @staticmethod
+    def grow_though_kernels(images: list[np.ndarray], kernels: np.ndarray) -> list[np.ndarray]:
+        return [cv.filter2D(src=img, ddepth=-1, kernel=kernel) for img in images for kernel in kernels]
+
+    @staticmethod
+    def train_models(x, y) -> None:
+        for name, clf in zip(names, classifiers):
+            clf = make_pipeline(StandardScaler(), clf)
+            clf.fit(x, y)
+            with open(f'models/{name}.pkl', 'wb') as f:  # open a text file
+                pickle.dump(clf, f)  # serialize the list
+
+    @staticmethod
+    def dict_to_datasets(piece_lib_dict: dict[int, str], all_pieces: dict[str, list[np.ndarray]]) -> (
+            list[np.ndarray], list[int]):
+        data = classification = []
+        for type_nr, piece_type in enumerate(piece_lib_dict.keys()):
+            for piece in all_pieces[piece_type]:
+                data.append(piece.reshape(-1))
+                classification.append(type_nr)
+        return data, classification
