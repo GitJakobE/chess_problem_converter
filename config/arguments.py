@@ -1,12 +1,14 @@
 from typing import Optional
+
 from argparse import Namespace
 from dataclasses import dataclass
-
 from dacite import from_dict
+
 
 @dataclass
 class CLIArgs:
     input_file: Optional[str]
+    train_model: bool = False
 
     @staticmethod
     def from_namespace(name_space: Namespace) -> "CLIArgs":

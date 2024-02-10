@@ -33,8 +33,7 @@ class DataModel:
         tile_size = 32
         logger.debug("starting training:")
         training_lib = "trainingset"
-        piece_lib_dict = {x[0].split('\\')[-1] + "_" + x[0].split('\\')[-2]: x[0] for x in os.walk(training_lib) if
-                          len(x[0].split("\\")) > 2}
+        piece_lib_dict = DataModel.split_paths_to_dict(paths=os.walk(training_lib))
 
         all_pieces = {}
         for pieces, lib in piece_lib_dict.items():
@@ -98,3 +97,7 @@ class DataModel:
                 data.append(piece.reshape(-1))
                 classification.append(type_nr)
         return data, classification
+
+    @staticmethod
+    def split_paths_to_dict(paths: list[str]):
+        return {x[0].split('\\')[-1] + "_" + x[0].split('\\')[-2]: x[0] for x in paths if len(x[0].split("\\")) > 2}
