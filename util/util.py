@@ -3,34 +3,29 @@ import numpy as np
 from math import pi
 from pdf2image import convert_from_path
 from scipy.ndimage import gaussian_filter, rotate
+from pathlib import Path
+
+from chess_problem_converter.config import BoardConfig
 
 
 class Util:
     @staticmethod
-    def print_board(board):
+    def print_board(board: np.ndarray, conf: BoardConfig, only_pieces: bool = False) -> None:
         _, board_width, _ = board.shape
-        tile_width = board_width//8
-        tol = 2
+        tile_width = board_width // 8
+        tol = 3
+        std_threshold = 15
 
-        cv.imwrite(f'out/board/board.png', board)
+        cv.imwrite(f'{conf.export.output_str}_board.png', board)
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
                 tile = board[board_width + tol - (y + 1) * tile_width:board_width - tol - y * tile_width,
                        tile_width * n + tol:tile_width * (1 + n) - tol]
-                cv.imwrite(f'out/board/{letter}{y + 1}.png', tile)
+                if (only_pieces):
+                    if std_threshold > np.std(gaussian_filter(tile, 5)):
+                        continue
 
-    @staticmethod
-    def print_board(board):
-        _, board_width, _ = board.shape
-        tile_width = board_width//8
-        tol = 2
-
-        cv.imwrite(f'out/board/board.png', board)
-        for y in range(8):
-            for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
-                tile = board[board_width + tol - (y + 1) * tile_width:board_width - tol - y * tile_width,
-                       tile_width * n + tol:tile_width * (1 + n) - tol]
-                cv.imwrite(f'out/board/{letter}{y + 1}.png', tile)
+                cv.imwrite(f'{conf.export.output_str}_{letter}{y + 1}.png', tile)
 
     @staticmethod
     def find_top_line(image, left_edge, right_edge, tile_width):
@@ -42,7 +37,7 @@ class Util:
         tol = 3
 
         for i in range(tile_width):
-            line_profile = image[(height - tile_width)//2 + i:(height + tile_width)//2 + i,
+            line_profile = image[(height - tile_width) // 2 + i:(height + tile_width) // 2 + i,
                            left_edge:right_edge]
             tiles = []
             for x in range(8):
@@ -52,20 +47,21 @@ class Util:
             if min_cross < min_dif:
                 best_i = i
                 min_dif = min_cross
-        y_line = height//2 + best_i
+        y_line = height // 2 + best_i
         cv.imwrite(f'out/line_profile.png', image[y_line - tile_width // 2 + 5:y_line - 5 + tile_width // 2,
-        left_edge:right_edge])
+                                            left_edge:right_edge])
         top_reached = False
 
         top_line = 0
         while not top_reached:
             y_line = y_line - tile_width
-            line_profile = image[y_line - tile_width//2 + 5:y_line - 5 + tile_width//2,
+            line_profile = image[y_line + 5:y_line - 5 + tile_width // 2,
                            left_edge:right_edge]
             tiles = []
             for x in range(8):
                 tiles.append(line_profile[:, x * tile_width + tol + 5:(x + 1) * tile_width - tol - 5])
-            if np.min([np.std(tiles[i]) for i in range(8)]) * 2 > np.std(line_profile):
+            if np.min([np.std(gaussian_filter(tiles[i], 5)) for i in range(8)]) * 5 > np.std(
+                    gaussian_filter(line_profile, 5)):
                 top_reached = True
                 top_line = y_line + tile_width // 2
 
@@ -82,6 +78,7 @@ class Util:
                     for color in range(3):
                         image[y][x][color] = 230
         return image
+
     @staticmethod
     def find_board_edges(image, line_profile_width, gaussian_sigma, approx_board):
         height, width, _ = image.shape
@@ -94,7 +91,7 @@ class Util:
         smoothed_profile = gaussian_filter(flattened_profile, sigma=gaussian_sigma)
 
         max_div = 0
-        max_tol = 10
+        max_tol = 20
         pos_left = 0
         pos_right = width - 1
 
