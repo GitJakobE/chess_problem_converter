@@ -6,4 +6,4 @@ out/board/*
 .venv
 .vscode
 .pytest_cache
-*__pycache__*
+*/__pycache__/*
