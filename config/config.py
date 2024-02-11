@@ -6,17 +6,16 @@ import pickle
 class Export:
     output_dir: str = "./out"
     output_with_tag: str = ""
-    output_str: str = "./out"
 
 
 @dataclass
 class BoardConfig:
-    export: Export = Export()
+    export = Export()
     line_profile_width = 300
     gaussian_sigma = 7
     approx_board = 510
     predict_dict = {}
-    only_pieces: bool = True,
+    only_pieces: bool = True
     source_image = ""
 
     def set_source_image(self, filename: str):

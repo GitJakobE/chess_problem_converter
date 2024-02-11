@@ -7,7 +7,7 @@ from scipy.ndimage import gaussian_filter, rotate
 from pathlib import Path
 from sklearn import pipeline
 
-from chess_problem_converter.config import BoardConfig
+from config import BoardConfig
 
 
 class Util:

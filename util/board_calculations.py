@@ -1,6 +1,6 @@
 import numpy as np
 from loguru import logger
-from chess_problem_converter.config import BoardConfig
+from config import BoardConfig
 import cv2 as cv
 from . import Util
 from scipy.ndimage import rotate

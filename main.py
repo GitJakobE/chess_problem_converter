@@ -9,6 +9,7 @@ from config import BoardConfig, CLIArgs
 from util import BoardCalculations, Util
 from model.data_model import DataModel
 
+
 def main(args: CLIArgs):
     conf = BoardConfig()
     conf.read_predict_dict()
@@ -48,7 +49,6 @@ def run_images(source_images: list[str], conf: BoardConfig):
             logger.error(f"{conf.source_image} error in finding board: {e}")
 
 
-
 def parse_arguments():
     parser = ArgumentParser(
         description="A converter of chess problems from images files to csv",
@@ -68,6 +68,7 @@ def parse_arguments():
         "-t",
         "--train-model",
         help="this will train the model using the png files in the trainingset folder",
+        action="store_true",
         required=False,
     )
 
