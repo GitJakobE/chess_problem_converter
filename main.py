@@ -71,6 +71,15 @@ def parse_arguments():
         required=False,
     )
 
+    parser.add_argument(
+        "-c",
+        "--convert-pdfs",
+        type= str,
+        help="used to convert the pdf files in a directory to png",
+        required=False
+    )
+
+
     return CLIArgs.from_namespace(parser.parse_args())
 
 
