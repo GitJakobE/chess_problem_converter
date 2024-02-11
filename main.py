@@ -19,6 +19,10 @@ def main(args: CLIArgs):
     if args.input_file is not None:
         source_images = [filename.path for filename in os.scandir("data/") if filename.path.endswith(".png")]
 
+    if args.model is not None:
+        conf.model = args.model
+        run_images(source_images=source_images, conf=conf)
+
     if args.train_model:
         DataModel.train_from_images()
 
@@ -38,7 +42,7 @@ def run_images(source_images: list[str], conf: BoardConfig):
             cv.imwrite(f'{conf.export.output_str}_board.png', board_image)
             # models = [model for model in os.scandir("models/") if model.name.endswith(".pkl")]
             # for model in models:
-            with open("models/Nearest Neighbors.pkl", 'rb') as f:  # open a text file
+            with open(f"models/{conf.model}.pkl", 'rb') as f:  # open a text file
                 clf = pickle.load(f)
                 Util.print_board(board=board_image, conf=conf, classifier=clf)
 
@@ -71,6 +75,15 @@ def parse_arguments():
         action="store_true",
         required=False,
     )
+
+    parser.add_argument(
+        "-m",
+        "--model",
+        help="this will train the model using the png files in the trainingset folder",
+        type=str,
+        required=False,
+    )
+
 
     parser.add_argument(
         "-c",

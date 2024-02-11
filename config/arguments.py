@@ -8,6 +8,7 @@ from dacite import from_dict
 @dataclass
 class CLIArgs:
     input_file: Optional[str]
+    model: Optional[str]
     train_model: bool = False
 
     @staticmethod

@@ -17,6 +17,7 @@ class BoardConfig:
     predict_dict = {}
     only_pieces: bool = True
     source_image = ""
+    model = ""
 
     def set_source_image(self, filename: str):
         self.source_image = filename

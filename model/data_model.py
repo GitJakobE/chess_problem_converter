@@ -1,7 +1,9 @@
+from typing import Union
 from loguru import logger
 import os
 import pickle
 
+from dataclasses import dataclass
 import cv2 as cv
 from scipy.ndimage import rotate
 import numpy as np
@@ -11,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
+
 
 names = [
     "Nearest Neighbors",
