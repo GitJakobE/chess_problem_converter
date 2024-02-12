@@ -15,9 +15,17 @@ def main(args: CLIArgs):
     conf.read_predict_dict()
     logger.add("out/log.log")
 
+    if args.convert_pdfs is not None:
+        if not os.path.exists(args.convert_pdfs):
+            logger.error(f"path for converting pdfs to pngs does not exsist: {args.convert_pdfs}")
+            raise IndexError(f"path does not exist {args.convert_pdfs}")
+        Util.convert_pdf_to_pngs(args.convert_pdfs)
+
     source_images = [filename.path for filename in os.scandir("data/") if filename.path.endswith(".png")]
     if args.input_file is not None:
         source_images = [filename.path for filename in os.scandir("data/") if filename.path.endswith(".png")]
+
+
 
     if args.model is not None:
         conf.model = args.model
