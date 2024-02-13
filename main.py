@@ -36,24 +36,26 @@ def main(args: CLIArgs):
 
 
 def run_images(source_images: list[str], conf: BoardConfig):
+    try:
+        with open(f"models/{conf.model}.pkl", 'rb') as f:  # open a text file
+            clf = pickle.load(f)
+    except Exception as e:
+        logger.error(f"Error loading the model: {e}")
+        raise FileNotFoundError
+
     for source_image in source_images:
         conf.set_export(source_image)
         conf.set_source_image(source_image)
 
         image = cv.imread(source_image)
-
+        image = cv.resize(image, (612, 792), interpolation=cv.INTER_LINEAR)
         logger.info(f"{source_image}: Printing board")
 
         try:
             board_image = BoardCalculations.find_board(image=image, conf=conf)
             logger.info(f"printing board and pieces for {source_image}")
             cv.imwrite(f'{conf.export.output_str}_board.png', board_image)
-            # models = [model for model in os.scandir("models/") if model.name.endswith(".pkl")]
-            # for model in models:
-            with open(f"models/{conf.model}.pkl", 'rb') as f:  # open a text file
-                clf = pickle.load(f)
-                Util.print_board(board=board_image, conf=conf, classifier=clf)
-
+            Util.print_tiles(board=board_image, conf=conf, classifier=clf)
         except IndexError:
             logger.error(f"{conf.source_image}: board out of scope:")
             continue

@@ -1,6 +1,6 @@
 import numpy as np
 from loguru import logger
-from config import BoardConfig
+from chess_problem_converter.config import BoardConfig
 import cv2 as cv
 from . import Util
 from scipy.ndimage import rotate
@@ -35,6 +35,7 @@ class BoardCalculations:
         logger.info(f"{conf.source_image}: top line: {top_line}. Bottom line: {top_line + board_width}")
         if top_line < 0 or top_line + board_width > res_image.shape[0]:
             raise IndexError("The board is out of range")
+        res_image = rotate(image, (right_tilt_angle + left_tilt_angle) / 2, reshape=False)
         board = res_image[top_line + 10:top_line + board_width - 10, left_edge + 10:right_edge - 10]
 
         return board

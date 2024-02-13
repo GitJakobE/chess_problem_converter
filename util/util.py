@@ -6,10 +6,9 @@ from math import pi
 from pdf2image import convert_from_path
 from loguru import logger
 from scipy.ndimage import gaussian_filter, rotate
-from pathlib import Path
 from sklearn import pipeline
 
-from ..config import BoardConfig
+from chess_problem_converter.config import BoardConfig
 
 
 class Util:
@@ -28,7 +27,7 @@ class Util:
                 if (conf.only_pieces):
                     if std_threshold > np.std(gaussian_filter(tile, 5)):
                         continue
-                if classifier is not None:
+                if classifier is not None and not conf.predict_dict == {}:
                     predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1, -1))[0]
                     predicted = conf.predict_dict[predicted]
                     color = predicted.split("_")[0]
@@ -97,14 +96,15 @@ class Util:
     @staticmethod
     def remove_black_writing(image):
         height, width, _ = image.shape
+        res_image = np.copy(image)
         th = 150
         # remove black:
         for x in range(width):
             for y in range(height):
-                if np.all(image[y][x] < th):
+                if np.all(res_image[y][x] < th):
                     for color in range(3):
-                        image[y][x][color] = 230
-        return image
+                        res_image[y][x][color] = 230
+        return res_image
 
     @staticmethod
     def find_board_edges(image, line_profile_width, gaussian_sigma, approx_board):
@@ -193,18 +193,24 @@ class Util:
         return locations
 
     @staticmethod
-    def convert_pdf_to_pngs(in_path: str, out_path: str) -> None:
+    def convert_pdf_to_pngs(in_path: str, out_path: str = "") -> None:
         image_dict = Util.convert_all_pdfs_in_paths(in_path)
+        if out_path == "":
+            out_path = in_path+"/png"
+            if not os.path.exists(out_path):
+                os.makedirs(out_path)
 
         for filename, pages in image_dict.items():
             for n, page in enumerate(pages):
                 out_filename = filename.replace(in_path, out_path)
-                out_filename = out_filename.replace(".pdf", f"__{n}.png")
-                page.save(out_filename)
+                if n==0:
+                    out_filename = out_filename.replace(".pdf", f".png")
+                    page.save(out_filename)
 
     @staticmethod
     def convert_all_pdfs_in_paths(path: str) -> dict[str, list[np.ndarray]]:
-        return {filename.path: convert_from_path(filename.path, 500) for filename in os.scandir(path)}
+
+        return {filename.path: convert_from_path(filename.path, 400) for filename in os.scandir(path) if filename.path.endswith(".pdf")}
 
     @staticmethod
     def draw_locations(target_image, locations):

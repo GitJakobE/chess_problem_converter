@@ -13,17 +13,17 @@ def create_board(image: np.ndarray, tile_width: int) -> np.ndarray:
     height, width, _ = image.shape
     if width // 2 - tile_width * 4 < 0:
         print("out of range")
-    startx = width // 2 - tile_width * 4
-    starty = height // 2 - tile_width * 4
-    for tilex in range(8):
-        for tiley in range(8):
+    start_x = width // 2 - tile_width * 4
+    start_y = height // 2 - tile_width * 4
+    for tile_x in range(8):
+        for tile_y in range(8):
             tile_color = 128
-            if (tilex % 2 == 0 and tiley % 2 != 0) or (tilex % 2 != 0 and tiley % 2 == 0):
+            if (tile_x % 2 == 0 and tile_y % 2 != 0) or (tile_x % 2 != 0 and tile_y % 2 == 0):
                 tile_color = 255
 
             for x in range(tile_width):
                 for y in range(tile_width):
-                    image[startx + x + tilex * tile_width][starty + y + tiley * tile_width] = tile_color
+                    image[start_x + x + tile_x * tile_width][start_y + y + tile_y * tile_width] = tile_color
     return image
 
 
