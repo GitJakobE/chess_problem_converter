@@ -1,10 +1,10 @@
+from math import pi
+
 import cv2 as cv
 import numpy as np
-from math import pi
 from pdf2image import convert_from_path
 from loguru import logger
 from scipy.ndimage import gaussian_filter, rotate
-from pathlib import Path
 from sklearn import pipeline
 
 from config import BoardConfig
@@ -19,7 +19,6 @@ class Util:
         tol = 3
         std_threshold = 15
 
-
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
                 tile = board[board_width + tol - (y + 1) * tile_width:board_width - tol - y * tile_width,
@@ -28,7 +27,7 @@ class Util:
                     if std_threshold > np.std(gaussian_filter(tile, 5)):
                         continue
                 if classifier is not None:
-                    predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1,-1))[0]
+                    predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1, -1))[0]
                     predicted = conf.predict_dict[predicted]
                     color = predicted.split("_")[0]
                     piece = predicted.split("_")[1]
@@ -51,6 +50,7 @@ class Util:
         best_i = 0
         tol = 3
 
+        # finding the best fit for the tiles
         for i in range(tile_width):
             line_profile = image[(height - tile_width) // 2 + i:(height + tile_width) // 2 + i,
                            left_edge:right_edge]
