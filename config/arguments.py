@@ -9,6 +9,7 @@ from dacite import from_dict
 class CLIArgs:
     input_file: Optional[str]
     model: Optional[str]
+    convert_pdfs: Optional[str]
     train_model: bool = False
 
     @staticmethod

@@ -15,9 +15,17 @@ def main(args: CLIArgs):
     conf.read_predict_dict()
     logger.add("out/log.log")
 
+    if args.convert_pdfs is not None:
+        if not os.path.exists(args.convert_pdfs):
+            logger.error(f"path for converting pdfs to pngs does not exsist: {args.convert_pdfs}")
+            raise IndexError(f"path does not exist {args.convert_pdfs}")
+        Util.convert_pdf_to_pngs(args.convert_pdfs)
+
     source_images = [filename.path for filename in os.scandir("data/") if filename.path.endswith(".png")]
     if args.input_file is not None:
         source_images = [filename.path for filename in os.scandir("data/") if filename.path.endswith(".png")]
+
+
 
     if args.model is not None:
         conf.model = args.model
@@ -28,24 +36,26 @@ def main(args: CLIArgs):
 
 
 def run_images(source_images: list[str], conf: BoardConfig):
+    try:
+        with open(f"models/{conf.model}.pkl", 'rb') as f:  # open a text file
+            clf = pickle.load(f)
+    except Exception as e:
+        logger.error(f"Error loading the model: {e}")
+        raise FileNotFoundError
+
     for source_image in source_images:
         conf.set_export(source_image)
         conf.set_source_image(source_image)
 
         image = cv.imread(source_image)
-
+        image = cv.resize(image, (612, 792), interpolation=cv.INTER_LINEAR)
         logger.info(f"{source_image}: Printing board")
 
         try:
             board_image = BoardCalculations.find_board(image=image, conf=conf)
             logger.info(f"printing board and pieces for {source_image}")
             cv.imwrite(f'{conf.export.output_str}_board.png', board_image)
-            # models = [model for model in os.scandir("models/") if model.name.endswith(".pkl")]
-            # for model in models:
-            with open(f"models/{conf.model}.pkl", 'rb') as f:  # open a text file
-                clf = pickle.load(f)
-                Util.print_board(board=board_image, conf=conf, classifier=clf)
-
+            Util.print_tiles(board=board_image, conf=conf, classifier=clf)
         except IndexError:
             logger.error(f"{conf.source_image}: board out of scope:")
             continue
