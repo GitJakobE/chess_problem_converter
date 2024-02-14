@@ -1,6 +1,6 @@
 import numpy as np
 
-from chess_problem_converter.util import Util
+from util import Util
 
 
 def test_convert_all_pdfs_in_paths():

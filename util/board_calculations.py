@@ -1,6 +1,6 @@
 import numpy as np
 from loguru import logger
-from chess_problem_converter.config import BoardConfig
+from config import BoardConfig
 import cv2 as cv
 from . import Util
 from scipy.ndimage import rotate
@@ -16,8 +16,7 @@ class BoardCalculations:
 
         # find the tilt of the board
         right_tilt_angle, left_tilt_angle = Util.find_tilt_angle(res_image, conf.line_profile_width,
-                                                                 conf.gaussian_sigma,
-                                                                 10)
+                                                                 conf.gaussian_sigma, 10)
         res_image = rotate(res_image, (right_tilt_angle + left_tilt_angle) / 2, reshape=False)
 
         # find the edges of the board
