@@ -52,7 +52,7 @@ def run_images(source_images: list[str], conf: BoardConfig):
         logger.info(f"{source_image}: Printing board")
 
         try:
-            board_image = BoardCalculations.find_board(image=image, conf=conf)
+            board_image = BoardCalculations.find_board(image=image, conf=conf).board_image
             logger.info(f"printing board and pieces for {source_image}")
             cv.imwrite(f'{conf.export.output_str}_board.png', board_image)
             Util.print_tiles(board=board_image, conf=conf, classifier=clf)

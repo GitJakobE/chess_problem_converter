@@ -1,29 +1,25 @@
-from util import Util
+from util import Util, BoardCalculations, Board
+from config import BoardConfig
 import cv2 as cv
-
 from scipy.ndimage import rotate
 
-demos = [("Toft-00-0000.png", 11, 0, 1,)]
-
+# demos = [(11, 0, 1, 40, 47, 535,541)]
+demos = [Board(name="Toft-00-0000.png", left_edge=43, right_edge=535, right_tilt_angle=0, left_tilt_angle=0, top_line=108),
+         Board(name="Toft-00-0001.png", left_edge=60, right_edge=560, right_tilt_angle=0, left_tilt_angle=0, top_line=111),
+         Board(name="Toft-00-0002.png", left_edge=23, right_edge=582, right_tilt_angle=0, left_tilt_angle=0, top_line=123),
+         Board(name="Toft-00-0003.png", left_edge=42, right_edge=543, right_tilt_angle=0, left_tilt_angle=0, top_line=107),
+         Board(name="Toft-00-0004.png", left_edge=52, right_edge=539, right_tilt_angle=0, left_tilt_angle=0, top_line=103),
+         Board(name="Toft-00-0005.png", left_edge=38, right_edge=582, right_tilt_angle=0, left_tilt_angle=0, top_line=107)]
 
 def test_left_right_demos():
-    for demo in demos:
-        image = cv.imread(f"../Demos/{demo[0]}")
+    for demo in demos[:]:
+        image = cv.imread(f"../Demos/{demo.name}")
         image = cv.resize(image, (612, 792), interpolation=cv.INTER_LINEAR)
-        res_image = Util.remove_black_writing(image)
-        right_tilt_angle, left_tilt_angle = Util.find_tilt_angle(res_image, 300, 5, 10)
-        assert abs(right_tilt_angle) <= demo[3] and abs(left_tilt_angle) <= demo[3] and abs(right_tilt_angle) >= demo[
-            2] and abs(left_tilt_angle) >= demo[2]
+        conf = BoardConfig()
+        conf.set_export(demo.name)
+        conf.set_source_image(demo.name)
 
-        res_image = rotate(res_image, (right_tilt_angle + left_tilt_angle) / 2, reshape=False)
-
-        # find the edges of the board
-        left_edge, right_edge = Util.find_board_edges(res_image, 300, 5,510)
-
-        # find the top/bottom of the board
-        board_width = right_edge - left_edge
-        tile_width = board_width // 8
-        top_line = Util.find_top_line(res_image, left_edge, right_edge, tile_width)
-
-
-    Util.find_tilt_angle()
+        board = BoardCalculations.find_board(image, conf)
+        assert abs(board.right_tilt_angle-demo.right_tilt_angle)<=1.0 and abs(board.left_tilt_angle-demo.left_tilt_angle)<=1.0
+        assert abs(board.left_edge-demo.left_edge)<5 and abs(board.right_edge-demo.right_edge)<5
+        assert abs(board.top_line-demo.top_line)<5

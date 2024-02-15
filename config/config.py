@@ -13,7 +13,7 @@ class BoardConfig:
     export = Export()
     line_profile_width = 300
     gaussian_sigma = 7
-    approx_board = 510
+    approx_board = 530
     predict_dict = {}
     only_pieces: bool = True
     source_image = ""

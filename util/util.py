@@ -1,4 +1,5 @@
 from math import pi
+import matplotlib.pylab as plt
 
 import os
 
@@ -51,6 +52,7 @@ class Util:
         best_i = 0
         tol = 3
 
+
         # finding the best fit for the tiles
         for i in range(tile_width):
             line_profile = image[(height - tile_width) // 2 + i:(height + tile_width) // 2 + i,
@@ -69,13 +71,13 @@ class Util:
     def _find_top_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int,
                        tile_center_line: int) -> int:
         top_reached = False
-        tol = 3
+        tol = 8
         sigma = 5
         top_line = 0
 
-        while not top_reached and tile_center_line>0:
+        while not top_reached and tile_center_line > 0:
             tile_center_line = tile_center_line - tile_width
-            line_profile = image[tile_center_line + tol:tile_center_line - tol + tile_width // 2,
+            line_profile = image[tile_center_line + tol - tile_width // 2:tile_center_line - tol + tile_width // 2,
                            left_edge:right_edge]
             tiles = []
             for x in range(8):
@@ -88,19 +90,36 @@ class Util:
         return top_line
 
     @staticmethod
+    def alt_find_top_pos(image: np.ndarray, left_edge: int, right_edge: int):
+        height, width, _ = image.shape
+        gray_img = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        bgr = np.percentile(gray_img, 75)
+
+        line_profile = gray_img[0:height//2,
+                       left_edge:right_edge]
+        stds = [np.std(line_profile[x]) for x in range(height//2-1, height//2-150, -1) if np.percentile(line_profile[x], 25)<bgr-1]
+        stds_10 = np.percentile(stds, 25)
+        x= height//2-150
+        cons_lines=0
+        while x>0 and (cons_lines<3 or (np.percentile(line_profile[x], 25)<bgr-1) or np.std(line_profile[x])>stds_10):
+            x-=1
+            cons_lines = cons_lines+1 if np.percentile(line_profile[x], 25)>=bgr-1 and np.std(line_profile[x])<=stds_10 else 0
+        return x+6
+
+    @staticmethod
     def find_top_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int) -> int:
         height, width, _ = image.shape
-
-        # find the middel of a square/tile
-        tile_center_line = Util.find_best_tile_line(image, left_edge, right_edge, tile_width)
-        # finds where the last line ends:
-        return Util._find_top_line(image, left_edge, right_edge, tile_width, tile_center_line)
+        return Util.alt_find_top_pos(image, left_edge, right_edge)
+        # # find the middel of a square/tile
+        # tile_center_line = Util.find_best_tile_line(image, left_edge, right_edge, tile_width)
+        # # finds where the last line ends:
+        # return Util._find_top_line(image, left_edge, right_edge, tile_width, tile_center_line)
 
     @staticmethod
     def remove_black_writing(image):
         height, width, _ = image.shape
         res_image = np.copy(image)
-        th = 150
+        th = 100
         # remove black:
         for x in range(width):
             for y in range(height):
@@ -114,30 +133,33 @@ class Util:
         height, width, _ = image.shape
         side_cut = 5
 
+        gray_img = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         flattened_profile = np.mean(
-            image[(height - line_profile_width) // 2:(height + line_profile_width) // 2,
+            gray_img[(height - line_profile_width) // 2:(height + line_profile_width) // 2,
             side_cut:width - side_cut], axis=0)
 
-        smoothed_profile = gaussian_filter(flattened_profile, sigma=gaussian_sigma)
+        smoothed_profile = gaussian_filter(flattened_profile, sigma=3)
 
         max_div = 0
-        max_tol = 20
+        max_tol = 40
         pos_left = 0
         pos_right = width - 1
 
         # Calculate the derivative
-        for x in range(max_tol, len(smoothed_profile) - max_tol - approx_board):
+        for x in range(100):
+            #matching the left and right side derivatives to find the lowest point
             for tol in range(-max_tol, max_tol):
-                derivative = np.mean(
-                    smoothed_profile[x] - smoothed_profile[x + 1] + smoothed_profile[x + approx_board + tol] -
-                    smoothed_profile[
-                        x + approx_board - 1 + tol])
-                if derivative > max_div:
-                    max_div = derivative
-                    pos_left = x
-                    pos_right = x + approx_board + tol
-        pos_left = pos_left + int(gaussian_sigma / 2) + side_cut
-        pos_right = pos_right + int(gaussian_sigma / 2) + side_cut
+                if (x + approx_board + 1 + tol)<len(smoothed_profile):
+                    derivative = smoothed_profile[x] - smoothed_profile[x + 1] - smoothed_profile[x + approx_board + tol] + \
+                                 smoothed_profile[x + approx_board + 1 + tol]
+                    if derivative > max_div:
+                        max_div = derivative
+                        pos_left = x
+                        pos_right = x + approx_board + tol
+
+        pos_left = pos_left + side_cut + 5
+        pos_right = pos_right + side_cut - 5
+
         return pos_left, pos_right
 
     @staticmethod
@@ -156,7 +178,7 @@ class Util:
         right_max_derivative_value = left_max_derivative_value = 0
         right_max_derivative_angle = left_max_derivative_angle = 0
         # Rotate the profile within the specified range and find the angle with the highest first derivative
-        for angle in np.arange(-tilt_range, tilt_range + 1):
+        for angle in np.arange(-tilt_range, tilt_range + 1, 0.25):
             # Rotate the profile
             rotated_profile = rotate(profile, angle, reshape=False)
 
@@ -199,21 +221,22 @@ class Util:
     def convert_pdf_to_pngs(in_path: str, out_path: str = "") -> None:
         image_dict = Util.convert_all_pdfs_in_paths(in_path)
         if out_path == "":
-            out_path = in_path+"/png"
+            out_path = in_path + "/png"
             if not os.path.exists(out_path):
                 os.makedirs(out_path)
 
         for filename, pages in image_dict.items():
             for n, page in enumerate(pages):
                 out_filename = filename.replace(in_path, out_path)
-                if n==0:
+                if n == 0:
                     out_filename = out_filename.replace(".pdf", f".png")
                     page.save(out_filename)
 
     @staticmethod
     def convert_all_pdfs_in_paths(path: str) -> dict[str, list[np.ndarray]]:
 
-        return {filename.path: convert_from_path(filename.path, 400) for filename in os.scandir(path) if filename.path.endswith(".pdf")}
+        return {filename.path: convert_from_path(filename.path, 400) for filename in os.scandir(path) if
+                filename.path.endswith(".pdf")}
 
     @staticmethod
     def draw_locations(target_image, locations):
