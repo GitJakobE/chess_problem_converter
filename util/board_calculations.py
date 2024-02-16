@@ -1,3 +1,4 @@
+from enum import StrEnum, auto
 from typing import Optional
 import numpy as np
 from loguru import logger
@@ -8,11 +9,34 @@ from scipy.ndimage import rotate
 from dataclasses import dataclass
 
 
+class Side(StrEnum):
+    Black: auto()
+    White: auto()
+
+
+class PiecesTypes(StrEnum):
+    King: auto()
+    Queen: auto()
+    Rock: auto()
+    Bishop: auto()
+    Knight: auto()
+    Peon: auto()
+
+
+@dataclass
+class Piece:
+    piece_type: PiecesTypes
+    position: str
+    side: Side
+    image: np.ndarray
+
+
 @dataclass
 class Board:
     name: str = ""
     org_image: Optional[np.ndarray] = None
     board_width: Optional[int] = None
+    board_height: Optional[int] = None
     rotated_image: Optional[np.ndarray] = None
     board_image: Optional[np.ndarray] = None
     left_edge: Optional[int] = None
@@ -20,12 +44,14 @@ class Board:
     top_line: Optional[int] = None
     right_tilt_angle: Optional[int] = None
     left_tilt_angle: Optional[int] = None
+    pieces: Optional[list[Piece]] = None
 
 
 class BoardCalculations:
 
     @staticmethod
     def find_board(image: np.ndarray, conf: BoardConfig) -> Board:
+        """finds the board and returns it with the cal. images"""
         cv.imwrite(f'{conf.export.output_str}_image_org.png', image)
 
         board = Board(org_image=image, board_width=conf.approx_board)
