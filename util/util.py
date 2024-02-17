@@ -52,7 +52,6 @@ class Util:
         best_i = 0
         tol = 3
 
-
         # finding the best fit for the tiles
         for i in range(tile_width):
             line_profile = image[(height - tile_width) // 2 + i:(height + tile_width) // 2 + i,
@@ -92,19 +91,21 @@ class Util:
     @staticmethod
     def alt_find_top_pos(image: np.ndarray, left_edge: int, right_edge: int):
         height, width, _ = image.shape
-        gray_img = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        gray_img = image[:, :, 2]
         bgr = np.percentile(gray_img, 75)
 
-        line_profile = gray_img[0:height//2,
-                       left_edge:right_edge]
-        stds = [np.std(line_profile[x]) for x in range(height//2-1, height//2-150, -1) if np.percentile(line_profile[x], 25)<bgr-1]
+        line_profile = gray_img[0:height // 2, left_edge:right_edge]
+        stds = [np.std(line_profile[x]) for x in range(height // 2 - 1, height // 2 - 150, -1) if
+                np.percentile(line_profile[x], 25) < bgr - 1]
         stds_10 = np.percentile(stds, 25)
-        x= height//2-150
-        cons_lines=0
-        while x>0 and (cons_lines<3 or (np.percentile(line_profile[x], 25)<bgr-1) or np.std(line_profile[x])>stds_10):
-            x-=1
-            cons_lines = cons_lines+1 if np.percentile(line_profile[x], 25)>=bgr-1 and np.std(line_profile[x])<=stds_10 else 0
-        return x+6
+        x = height // 2 - 150
+        cons_lines = 0
+        while x > 0 and (
+                cons_lines < 3 or (np.percentile(line_profile[x], 25) < bgr - 1) or np.std(line_profile[x]) > stds_10):
+            x -= 1
+            cons_lines = cons_lines + 1 if np.percentile(line_profile[x], 25) >= bgr - 1 and np.std(
+                line_profile[x]) <= stds_10 else 0
+        return x + 6
 
     @staticmethod
     def find_top_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int) -> int:
@@ -119,13 +120,24 @@ class Util:
     def remove_black_writing(image):
         height, width, _ = image.shape
         res_image = np.copy(image)
-        th = 100
+        bgr = np.median(image)
+        th1 = bgr * 0.95
+        th2 = 150
+        th3 = 100
         # remove black:
-        for x in range(width):
-            for y in range(height):
-                if np.all(res_image[y][x] < th):
-                    for color in range(3):
-                        res_image[y][x][color] = 230
+        for x in range(1, width - 1):
+            for y in range(1, height - 1):
+                if (np.all(res_image[y][x] < th1) and np.min(res_image[y][x]) * 1.15 > np.max(res_image[y][x])) or (
+                        np.all(
+                            res_image[y][x] < th2) and np.min(res_image[y][x]) * 1.3 > np.max(
+                    res_image[y][x])) or np.all(res_image[y][x] < th3):
+                    res_image[y][x] = np.percentile(res_image[y - 1:y + 2, x - 1:x + 2, :], 75, axis=(0, 1))
+                    # res = [res_image[y + y_1][x + x_1] for x_1 in range(-1, 2) for y_1 in range(-1, 2) if
+                    #        0 <= x + x_1 < width and 0 <= y + y_1 < height and (
+                    #                    np.all(res_image[y + y_1][x + x_1] >= th1) or np.min(
+                    #                res_image[y + y_1][x + x_1]) * 1.2 <= np.max(res_image[y + y_1][x + x_1]))]
+                    # res_image[y][x] = np.mean(res, axis=0) if len(res) > 0 else [bgr, bgr, bgr]
+
         return res_image
 
     @staticmethod
@@ -147,10 +159,11 @@ class Util:
 
         # Calculate the derivative
         for x in range(100):
-            #matching the left and right side derivatives to find the lowest point
+            # matching the left and right side derivatives to find the lowest point
             for tol in range(-max_tol, max_tol):
-                if (x + approx_board + 1 + tol)<len(smoothed_profile):
-                    derivative = smoothed_profile[x] - smoothed_profile[x + 1] - smoothed_profile[x + approx_board + tol] + \
+                if (x + approx_board + 1 + tol) < len(smoothed_profile):
+                    derivative = smoothed_profile[x] - smoothed_profile[x + 1] - smoothed_profile[
+                        x + approx_board + tol] + \
                                  smoothed_profile[x + approx_board + 1 + tol]
                     if derivative > max_div:
                         max_div = derivative
