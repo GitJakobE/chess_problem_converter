@@ -1,5 +1,5 @@
 import numpy as np
-from chess_problem_converter.model.data_model import DataModel
+from model.data_model import DataModel
 
 
 def test_grow_data() -> None:

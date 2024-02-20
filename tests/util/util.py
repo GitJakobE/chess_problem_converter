@@ -16,7 +16,7 @@ def test_find_best_tile_line():
     image = np.ones((width, width, 1), )
 
     tile_width = 60
-    image = Util.create_board(image=image, tile_width=60)
+    image = Util.create_board(image=image[:,:,2], tile_width=60, tile_height=60, bgr=254)
 
     right_edge = width // 2 + 4 * tile_width
     left_edge = width // 2 - 4 * tile_width

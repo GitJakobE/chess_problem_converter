@@ -24,19 +24,13 @@ class BoardCalculations:
 
         board.rotated_image = rotate(res_image, (board.right_tilt_angle + board.left_tilt_angle) / 2, reshape=False)
 
-        # find the edges of the board
-        board.left_edge, board.right_edge = Util.find_board_edges(board.rotated_image, conf.line_profile_width,
-                                                                  conf.gaussian_sigma,
-                                                                  conf.approx_board_width)
-        logger.info(f"{conf.source_image}: Left_edge: {board.left_edge}, Right_edge:{board.right_edge}")
-        cv.imwrite(f'{conf.export.output_str}_full_rotated.png', board.rotated_image)
-        cv.imwrite(f'{conf.export.output_str}_full_rotated_blue.png', board.rotated_image[:,:,2])
         logger.info(f"{conf.source_image}: Printing full rotated board")
+        cv.imwrite(f'{conf.export.output_str}_full_rotated.png', board.rotated_image)
+
 
         # find the top/bottom of the board
-        board.board_width = board.right_edge - board.left_edge
-        tile_width = board.board_width // 8
-        Util.find_top_line(board.rotated_image, board.left_edge, board.right_edge, board)
+        Util.find_top_line(board.rotated_image, board)
+        logger.info(f"{conf.source_image}: Left_edge: {board.left_edge}, Right_edge:{board.right_edge}")
 
         logger.info(
             f"{conf.source_image}: top line: {board.top_line}. Bottom line: {board.top_line + board.board_width}")

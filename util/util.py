@@ -1,4 +1,3 @@
-from math import pi
 import matplotlib.pylab as plt
 
 import os
@@ -19,17 +18,18 @@ class Util:
     @staticmethod
     def print_tiles(board: np.ndarray, conf: BoardConfig, classifier: pipeline = None) -> None:
         logger.debug(f"Printing tiles ")
-        _, board_width, _ = board.shape
+        board_height, board_width, _ = board.shape
         tile_width = board_width // 8
+        tile_height = board_height // 8
         tol = 3
-        std_threshold = 15
+        std_threshold = 20
 
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
-                tile = board[board_width + tol - (y + 1) * tile_width:board_width - tol - y * tile_width,
+                tile = board[board_height + tol - (y + 1) * tile_height:board_height - tol - y * tile_height,
                        tile_width * n + tol:tile_width * (1 + n) - tol]
                 if (conf.only_pieces):
-                    if std_threshold > np.std(gaussian_filter(tile, 5)):
+                    if std_threshold > np.std(gaussian_filter(tile[4:tile_height-4, 4:tile_width-4], 7)):
                         continue
                 if classifier is not None and not conf.predict_dict == {}:
                     predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1, -1))[0]
@@ -109,41 +109,39 @@ class Util:
         return x + 8
 
     @staticmethod
-    def locate_board_from_template(image:np.ndarray, board:Board)->(int,int):
+    def locate_board_from_template(image: np.ndarray, board: Board) -> (int, int):
         bgr = np.percentile(image, 75)
         _, width = image.shape
-        image[image[:,:]<bgr-10]=bgr-10
+        image[image[:, :] < bgr - 10] = bgr - 10
         best_res = -1000
-        best_width =0
-        best_height =0
+        best_width = 0
+        best_height = 0
         for tile_width in range(60, 69):
             for tile_height in range(60, 69):
-                template = np.full((tile_height*8, tile_width*8), bgr)
+                template = np.full((tile_height * 8, tile_width * 8), bgr)
                 template = Util.create_board(template, tile_width, tile_height, bgr)
                 res = cv.matchTemplate(image, template.astype(np.uint8), cv.TM_CCOEFF_NORMED)
-                if(res.max()>best_res):
-                    best_res =res.max()
+                if (res.max() > best_res):
+                    best_res = res.max()
                     best_width, best_height = tile_width, tile_height
-                    topline,left_side = np.where(res == res.max())
-        board.board_width = best_width*8
+                    topline, left_side = np.where(res == res.max())
+        board.board_width = best_width * 8
         board.board_height = best_height * 8
         # board.board_image = image[topline[0]:topline[0]+best_height*8,left_side[0]:left_side[0]+best_width*8]
-        return topline[0],left_side[0]
+        return topline[0], left_side[0]
 
     @staticmethod
-    def find_top_line(image: np.ndarray, left_edge: int, right_edge: int, board:Board) -> (int, int):
+    def find_top_line(image: np.ndarray, board: Board) -> (int, int):
         height, width, _ = image.shape
-        # return Util.alt_find_top_pos(image, left_edge, right_edge)
-
-        top, leftside = Util.locate_board_from_template(image = image[50:height-100,30:width-30, 2], board=board)
-        board.left_edge =30+leftside
-        board.top_line = top+50
-        board.right_edge = board.left_edge+board.board_width
+        side_cut = 30
+        top_cut = 50
+        bottom_cut = 100
+        top, leftside = Util.locate_board_from_template(
+            image=image[top_cut:height - bottom_cut, side_cut:width - side_cut, 2], board=board)
+        board.left_edge = side_cut + leftside
+        board.top_line = top + top_cut
+        board.right_edge = board.left_edge + board.board_width
         return top, leftside
-        # # find the middel of a square/tile
-        # tile_center_line = Util.find_best_tile_line(image, left_edge, right_edge, tile_width)
-        # # finds where the last line ends:
-        # return Util._find_top_line(image, left_edge, right_edge, tile_width, tile_center_line)
 
     @staticmethod
     def remove_black_writing(image):
@@ -262,11 +260,11 @@ class Util:
     def split_black_white_pieces(folder_path: str):
         files = [file.name for file in os.scandir(folder_path) if file.is_file()]
         for file in files:
-            image = cv.imread(folder_path+"\\"+file)
-            #if more than 10% are dominately red we have a white piece:
+            image = cv.imread(folder_path + "\\" + file)
+            # if more than 10% are dominately red we have a white piece:
             folder = "Black"
-            if(np.sum(image[:,:,0]*1.5<image[:,:,2])>(image.shape[0]*image.shape[1]*0.05)):
-                folder= "White"
+            if (np.sum(image[:, :, 0] * 1.5 < image[:, :, 2]) > (image.shape[0] * image.shape[1] * 0.05)):
+                folder = "White"
                 print(f"{file} is white")
             if os.path.exists(folder_path + f"\\{folder}\\" + file):
                 os.remove(folder_path + f"\\" + file)
@@ -351,11 +349,11 @@ class Util:
         return a
 
     @staticmethod
-    def create_board(image: np.ndarray, tile_width: int, tile_height:int ,bgr:int) -> np.ndarray:
+    def create_board(image: np.ndarray, tile_width: int, tile_height: int, bgr: int) -> np.ndarray:
         height, width = image.shape
         if width // 2 - tile_width * 4 < 0:
             print("out of range")
-        black = bgr-10
+        black = bgr - 10
         start_x = width // 2 - tile_width * 4
         start_y = height // 2 - tile_height * 4
         for tile_x in range(8):
@@ -366,8 +364,8 @@ class Util:
 
                 for x in range(tile_width):
                     for y in range(tile_height):
-                        tile_color= bgr
-                        if base_tile_color == black and((x % 2 == 0 and y % 2 != 0) or (x % 2 != 0 and y % 2 == 0)):
-                             tile_color = black
-                        image[start_y + y + tile_y * tile_height][start_x + x + tile_x * tile_width] =base_tile_color
+                        tile_color = bgr
+                        if base_tile_color == black and ((x % 2 == 0 and y % 2 != 0) or (x % 2 != 0 and y % 2 == 0)):
+                            tile_color = black
+                        image[start_y + y + tile_y * tile_height][start_x + x + tile_x * tile_width] = base_tile_color
         return image
