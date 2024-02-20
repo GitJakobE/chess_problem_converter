@@ -11,9 +11,10 @@ class Export:
 @dataclass
 class BoardConfig:
     export = Export()
-    line_profile_width = 300
+    line_profile_width = 450
     gaussian_sigma = 7
-    approx_board = 530
+    approx_board_width = 530
+    approx_board_height = 530
     predict_dict = {}
     only_pieces: bool = True
     source_image = ""
