@@ -12,6 +12,29 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5) # Assuming RGB images
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10) # Assuming 10 classes
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
 
 names = [
     "Nearest Neighbors",
@@ -40,7 +63,7 @@ class DataModel:
         for pieces, lib in piece_lib_dict.items():
             all_pieces[pieces] = [cv.cvtColor(cv.imread(f.path), cv.COLOR_BGR2GRAY) for f in os.scandir(lib) if
                                   f.is_file()]
-            all_pieces[pieces] = DataModel.grow_dataset(all_pieces[pieces])
+            # all_pieces[pieces] = DataModel.grow_dataset(all_pieces[pieces])
             all_pieces[pieces] = [cv.resize(image, (tile_size, tile_size), interpolation=cv.INTER_LINEAR) for image in
                                   all_pieces[pieces]]
 
@@ -92,7 +115,8 @@ class DataModel:
     @staticmethod
     def dict_to_datasets(piece_lib_dict: dict[int, str], all_pieces: dict[str, list[np.ndarray]]) -> (
             list[np.ndarray], list[int]):
-        data = classification = []
+        data = []
+        classification = []
         for type_nr, piece_type in enumerate(piece_lib_dict.keys()):
             for piece in all_pieces[piece_type]:
                 data.append(piece.reshape(-1))

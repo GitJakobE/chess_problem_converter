@@ -11,3 +11,4 @@ scikit-learn
 dataclasses
 dacite
 loguru
+torch
