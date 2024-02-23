@@ -26,3 +26,7 @@ def test_split_paths_to_dict() -> None:
     spilt_dict = DataModel.split_paths_to_dict(list_of_paths)
     expected = {"Black_Knight": "trainingset\\Knight\\Black", "White_Knight": "trainingset\\Knight\\White"}
     assert spilt_dict == expected
+
+def test_pytest_model():
+    dm = DataModel()
+    dm.train_torch_model()
