@@ -46,25 +46,32 @@ class Util:
         return resized_gray.reshape(-1)
 
     @staticmethod
-    def find_best_tile_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int) -> int:
+    def find_best_tile_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int) -> list[int]:
         height, width, _ = image.shape
         min_dif = 1000
         best_i = 0
         tol = 3
+        startpos = height // 2
+        res=[]
 
-        # finding the best fit for the tiles
-        for i in range(tile_width):
-            line_profile = image[(height - tile_width) // 2 + i:(height + tile_width) // 2 + i,
-                           left_edge:right_edge]
-            tiles = []
-            for x in range(8):
-                tiles.append(line_profile[:, x * tile_width + tol:(x + 1) * tile_width - tol])
-            min_cross = np.min([np.std(gaussian_filter(tile, sigma=9)) for tile in tiles])
+        while(startpos>0):
+            startpos-=tile_width
+            # finding the best fit for the tiles
+            for i in range(-tile_width//2, tile_width//2):
+                line_profile = image[startpos - tile_width // 2 + i:startpos + tile_width // 2 + i,
+                               left_edge:right_edge]
+                tiles = []
+                for x in range(8):
+                    tiles.append(line_profile[:, x * tile_width + tol:(x + 1) * tile_width - tol])
+                min_cross = np.min([np.std(gaussian_filter(tile, sigma=9)) for tile in tiles])
 
-            if min_cross < min_dif:
-                best_i = i
-                min_dif = min_cross
-        return height // 2 + best_i
+                if min_cross < min_dif:
+                    best_i = i
+                    min_dif = min_cross
+            startpos += best_i
+            res.append(startpos)
+        return res
+
 
     @staticmethod
     def _find_top_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int,
@@ -110,10 +117,14 @@ class Util:
     @staticmethod
     def find_top_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int) -> int:
         height, width, _ = image.shape
-        return Util.alt_find_top_pos(image, left_edge, right_edge)
+        suggested_top = Util.alt_find_top_pos(image, left_edge, right_edge)
         # # find the middel of a square/tile
-        # tile_center_line = Util.find_best_tile_line(image, left_edge, right_edge, tile_width)
+        tile_center_line = Util.find_best_tile_line(image, left_edge, right_edge, tile_width)
+        possible_ends = [x + tile_width // 2 for x in
+                         range(tile_center_line, tile_center_line % tile_width - tile_width, -tile_width)]
+
         # # finds where the last line ends:
+
         # return Util._find_top_line(image, left_edge, right_edge, tile_width, tile_center_line)
 
     @staticmethod
@@ -121,22 +132,16 @@ class Util:
         height, width, _ = image.shape
         res_image = np.copy(image)
         bgr = np.median(image)
-        th1 = bgr * 0.95
+        th1 = bgr * 0.90
         th2 = 150
         th3 = 100
         # remove black:
         for x in range(1, width - 1):
             for y in range(1, height - 1):
-                if (np.all(res_image[y][x] < th1) and np.min(res_image[y][x]) * 1.15 > np.max(res_image[y][x])) or (
-                        np.all(
-                            res_image[y][x] < th2) and np.min(res_image[y][x]) * 1.3 > np.max(
+                if (np.all(res_image[y][x] < th1) and np.min(res_image[y][x]) * 1.1 > np.max(res_image[y][x])) or (
+                        np.all(res_image[y][x] < th2) and np.min(res_image[y][x]) * 1.2 > np.max(
                     res_image[y][x])) or np.all(res_image[y][x] < th3):
                     res_image[y][x] = np.percentile(res_image[y - 1:y + 2, x - 1:x + 2, :], 75, axis=(0, 1))
-                    # res = [res_image[y + y_1][x + x_1] for x_1 in range(-1, 2) for y_1 in range(-1, 2) if
-                    #        0 <= x + x_1 < width and 0 <= y + y_1 < height and (
-                    #                    np.all(res_image[y + y_1][x + x_1] >= th1) or np.min(
-                    #                res_image[y + y_1][x + x_1]) * 1.2 <= np.max(res_image[y + y_1][x + x_1]))]
-                    # res_image[y][x] = np.mean(res, axis=0) if len(res) > 0 else [bgr, bgr, bgr]
 
         return res_image
 
