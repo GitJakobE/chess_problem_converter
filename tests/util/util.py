@@ -21,7 +21,7 @@ def test_find_best_tile_line():
     right_edge = width // 2 + 4 * tile_width
     left_edge = width // 2 - 4 * tile_width
 
-    y_line = Util.find_best_tile_line(image, right_edge=right_edge, left_edge=left_edge, tile_width=tile_width)
+    y_line = Util.find_best_tile_line(image, right_edge=right_edge, left_edge=left_edge, tile_width=tile_width)[-1]
     assert y_line == width // 2 + tile_width // 2
 
 
