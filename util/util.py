@@ -1,4 +1,3 @@
-from math import pi
 import matplotlib.pylab as plt
 
 import os
@@ -11,6 +10,7 @@ from loguru import logger
 from scipy.ndimage import gaussian_filter, rotate
 from sklearn import pipeline
 
+from . import Board
 from config import BoardConfig
 
 
@@ -18,17 +18,18 @@ class Util:
     @staticmethod
     def print_tiles(board: np.ndarray, conf: BoardConfig, classifier: pipeline = None) -> None:
         logger.debug(f"Printing tiles ")
-        _, board_width, _ = board.shape
+        board_height, board_width, _ = board.shape
         tile_width = board_width // 8
+        tile_height = board_height // 8
         tol = 3
-        std_threshold = 15
+        std_threshold = 20
 
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
-                tile = board[board_width + tol - (y + 1) * tile_width:board_width - tol - y * tile_width,
+                tile = board[board_height + tol - (y + 1) * tile_height:board_height - tol - y * tile_height,
                        tile_width * n + tol:tile_width * (1 + n) - tol]
                 if (conf.only_pieces):
-                    if std_threshold > np.std(gaussian_filter(tile, 5)):
+                    if std_threshold > np.std(gaussian_filter(tile[4:tile_height-4, 4:tile_width-4], 7)):
                         continue
                 if classifier is not None and not conf.predict_dict == {}:
                     predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1, -1))[0]
@@ -103,29 +104,51 @@ class Util:
 
         line_profile = gray_img[0:height // 2, left_edge:right_edge]
         stds = [np.std(line_profile[x]) for x in range(height // 2 - 1, height // 2 - 150, -1) if
-                np.percentile(line_profile[x], 25) < bgr - 1]
+                np.percentile(line_profile[x], 15) < bgr - 2]
         stds_10 = np.percentile(stds, 25)
         x = height // 2 - 150
         cons_lines = 0
         while x > 0 and (
-                cons_lines < 3 or (np.percentile(line_profile[x], 25) < bgr - 1) or np.std(line_profile[x]) > stds_10):
+                cons_lines < 5 or (np.percentile(line_profile[x], 15) < bgr - 2) or np.std(line_profile[x]) > stds_10):
             x -= 1
-            cons_lines = cons_lines + 1 if np.percentile(line_profile[x], 25) >= bgr - 1 and np.std(
+            cons_lines = cons_lines + 1 if np.percentile(line_profile[x], 15) >= bgr - 2 and np.std(
                 line_profile[x]) <= stds_10 else 0
-        return x + 6
+        return x + 8
 
     @staticmethod
-    def find_top_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int) -> int:
+    def locate_board_from_template(image: np.ndarray, board: Board) -> (int, int):
+        bgr = np.percentile(image, 75)
+        _, width = image.shape
+        image[image[:, :] < bgr - 10] = bgr - 10
+        best_res = -1000
+        best_width = 0
+        best_height = 0
+        for tile_width in range(60, 69):
+            for tile_height in range(60, 69):
+                template = np.full((tile_height * 8, tile_width * 8), bgr)
+                template = Util.create_board(template, tile_width, tile_height, bgr)
+                res = cv.matchTemplate(image, template.astype(np.uint8), cv.TM_CCOEFF_NORMED)
+                if (res.max() > best_res):
+                    best_res = res.max()
+                    best_width, best_height = tile_width, tile_height
+                    topline, left_side = np.where(res == res.max())
+        board.board_width = best_width * 8
+        board.board_height = best_height * 8
+        # board.board_image = image[topline[0]:topline[0]+best_height*8,left_side[0]:left_side[0]+best_width*8]
+        return topline[0], left_side[0]
+
+    @staticmethod
+    def find_top_line(image: np.ndarray, board: Board) -> (int, int):
         height, width, _ = image.shape
-        suggested_top = Util.alt_find_top_pos(image, left_edge, right_edge)
-        # # find the middel of a square/tile
-        tile_center_line = Util.find_best_tile_line(image, left_edge, right_edge, tile_width)
-        possible_ends = [x + tile_width // 2 for x in
-                         range(tile_center_line, tile_center_line % tile_width - tile_width, -tile_width)]
-
-        # # finds where the last line ends:
-
-        # return Util._find_top_line(image, left_edge, right_edge, tile_width, tile_center_line)
+        side_cut = 30
+        top_cut = 50
+        bottom_cut = 100
+        top, leftside = Util.locate_board_from_template(
+            image=image[top_cut:height - bottom_cut, side_cut:width - side_cut, 2], board=board)
+        board.left_edge = side_cut + leftside
+        board.top_line = top + top_cut
+        board.right_edge = board.left_edge + board.board_width
+        return top, leftside
 
     @staticmethod
     def remove_black_writing(image):
@@ -168,8 +191,7 @@ class Util:
             for tol in range(-max_tol, max_tol):
                 if (x + approx_board + 1 + tol) < len(smoothed_profile):
                     derivative = smoothed_profile[x] - smoothed_profile[x + 1] - smoothed_profile[
-                        x + approx_board + tol] + \
-                                 smoothed_profile[x + approx_board + 1 + tol]
+                        x + approx_board + tol] + smoothed_profile[x + approx_board + 1 + tol]
                     if derivative > max_div:
                         max_div = derivative
                         pos_left = x
@@ -234,6 +256,22 @@ class Util:
             locations.append({'name': template_name, 'w': w, 'h': h, 'positions': np.where(res >= threshold)})
 
         return locations
+
+    @staticmethod
+    def split_black_white_pieces(folder_path: str):
+        files = [file.name for file in os.scandir(folder_path) if file.is_file()]
+        for file in files:
+            image = cv.imread(folder_path + "\\" + file)
+            # if more than 10% are dominately red we have a white piece:
+            folder = "Black"
+            if (np.sum(image[:, :, 0] * 1.5 < image[:, :, 2]) > (image.shape[0] * image.shape[1] * 0.05)):
+                folder = "White"
+                print(f"{file} is white")
+            if os.path.exists(folder_path + f"\\{folder}\\" + file):
+                os.remove(folder_path + f"\\" + file)
+            else:
+                os.rename(folder_path + "\\" + file, folder_path + f"\\{folder}\\" + file)
+            print(f"{file} is black")
 
     @staticmethod
     def convert_pdf_to_pngs(in_path: str, out_path: str = "") -> None:
@@ -310,3 +348,25 @@ class Util:
         if a > pi / 2.0:
             return a - pi
         return a
+
+    @staticmethod
+    def create_board(image: np.ndarray, tile_width: int, tile_height: int, bgr: int) -> np.ndarray:
+        height, width = image.shape
+        if width // 2 - tile_width * 4 < 0:
+            print("out of range")
+        black = bgr - 10
+        start_x = width // 2 - tile_width * 4
+        start_y = height // 2 - tile_height * 4
+        for tile_x in range(8):
+            for tile_y in range(8):
+                base_tile_color = bgr
+                if (tile_x % 2 == 0 and tile_y % 2 != 0) or (tile_x % 2 != 0 and tile_y % 2 == 0):
+                    base_tile_color = black
+
+                for x in range(tile_width):
+                    for y in range(tile_height):
+                        tile_color = bgr
+                        if base_tile_color == black and ((x % 2 == 0 and y % 2 != 0) or (x % 2 != 0 and y % 2 == 0)):
+                            tile_color = black
+                        image[start_y + y + tile_y * tile_height][start_x + x + tile_x * tile_width] = base_tile_color
+        return image

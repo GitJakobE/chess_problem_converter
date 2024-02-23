@@ -6,10 +6,9 @@ out/board/*
 .venv
 .vscode
 .pytest_cache
-<<<<<<< HEAD
 .models/
 .traningset/
-/trainingset/
+/trainingset/*
 /trainingset/Bishop/
 /trainingset/Empty/
 /trainingset/King/
@@ -17,6 +16,5 @@ out/board/*
 /trainingset/Pawn/
 /trainingset/Queen/
 /trainingset/Rock/
-=======
 __pycache__/
->>>>>>> main
+/temp/*
