@@ -34,7 +34,7 @@ class PiecesDataset(Dataset):
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5) # Assuming RGB images
+        self.conv1 = nn.Conv2d(1, 6, 5) # Assuming RGB images
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
@@ -83,14 +83,14 @@ class DataModel:
         for pieces, lib in piece_lib_dict.items():
             all_pieces[pieces] = [cv.cvtColor(cv.imread(f.path), cv.COLOR_BGR2GRAY) for f in os.scandir(lib) if
                                   f.is_file()]
-            all_pieces[pieces] = DataModel.grow_dataset(all_pieces[pieces])
+            #all_pieces[pieces] = DataModel.grow_dataset(all_pieces[pieces])
             all_pieces[pieces] = [cv.resize(image, (tile_size, tile_size), interpolation=cv.INTER_LINEAR) for image in
                                   all_pieces[pieces]]
 
         with open(f'piece_lib_dict.pkl', 'wb') as f:  # open a text file
             pickle.dump({type_nr: piece_type for type_nr, piece_type in enumerate(piece_lib_dict.keys())}, f)
 
-        data, classification = DataModel.dict_to_datasets(piece_lib_dict=piece_lib_dict, all_pieces=all_pieces)
+        data, classification = DataModel.dict_to_datasets(piece_lib_dict=piece_lib_dict, all_pieces=all_pieces, flatten=False)
         images_tensor = torch.tensor(data, dtype=torch.float32)
         labels_tensor = torch.tensor(classification, dtype=torch.long)
         my_dataset = PiecesDataset(images_tensor, labels_tensor)
@@ -138,7 +138,7 @@ class DataModel:
         with open(f'piece_lib_dict.pkl', 'wb') as f:  # open a text file
             pickle.dump({type_nr: piece_type for type_nr, piece_type in enumerate(piece_lib_dict.keys())}, f)
 
-        data, classification = DataModel.dict_to_datasets(piece_lib_dict=piece_lib_dict, all_pieces=all_pieces)
+        data, classification = DataModel.dict_to_datasets(piece_lib_dict=piece_lib_dict, all_pieces=all_pieces, flatten=True)
 
         x_train, x_test, y_train, y_test = train_test_split(data, classification, test_size=0.5, shuffle=True)
 
@@ -182,13 +182,16 @@ class DataModel:
                 pickle.dump(clf, f)  # serialize the list
 
     @staticmethod
-    def dict_to_datasets(piece_lib_dict: dict[int, str], all_pieces: dict[str, list[np.ndarray]]) -> (
+    def dict_to_datasets(piece_lib_dict: dict[int, str], all_pieces: dict[str, list[np.ndarray]], flatten:bool) -> (
             list[np.ndarray], list[int]):
         data = []
         classification = []
         for type_nr, piece_type in enumerate(piece_lib_dict.keys()):
             for piece in all_pieces[piece_type]:
-                data.append(piece.reshape(-1))
+                if flatten:
+                    data.append(piece.reshape(-1))
+                else:
+                    data.append(piece)
                 classification.append(type_nr)
         return data, classification
 
