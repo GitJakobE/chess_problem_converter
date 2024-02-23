@@ -27,6 +27,8 @@ def test_split_paths_to_dict() -> None:
     expected = {"Black_Knight": "trainingset\\Knight\\Black", "White_Knight": "trainingset\\Knight\\White"}
     assert spilt_dict == expected
 
-def test_pytest_model():
+
+def test_train_pytorch() ->None:
     dm = DataModel()
-    dm.train_torch_model()
+    dm.init_torch_model()
+    dm.train_torch_model(training_lib="../../trainingset")
