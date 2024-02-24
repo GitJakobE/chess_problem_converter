@@ -20,7 +20,7 @@ from torch.utils.data import Dataset, DataLoader
 class PiecesDataset(Dataset):
     def __init__(self, images, classifications):
 
-        self.images = images
+        self.images = images.unsqueeze(1)
         self.classifications = classifications
 
     def __len__(self):
@@ -39,7 +39,7 @@ class SimpleCNN(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10) # Assuming 10 classes
+        self.fc3 = nn.Linear(84, 12) # Assuming 10 classes
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
