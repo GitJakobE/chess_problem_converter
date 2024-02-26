@@ -32,7 +32,7 @@ class PiecesDataset(Dataset):
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)  # Assuming RGB images
+        self.conv1 = nn.Conv2d(1, 6, 5)  # Assuming RGB images
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
@@ -55,11 +55,11 @@ class TouchDataModel:
         # Instantiate your model, loss function, and optimizer
         self.model = SimpleCNN()
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=0.01, momentum=0.9)
         self.tile_size = 32
         self.transform = transforms.Compose([
             transforms.Resize((self.tile_size, self.tile_size)),  # Resize the image to 32x32
-            # transforms.Grayscale(),  # Convert to grayscale if your model expects grayscale inputs
+            transforms.Grayscale(),  # Convert to grayscale if your model expects grayscale inputs
             transforms.ToTensor(),  # Convert to a PyTorch tensor
             transforms.Normalize((0.5,), (0.5,)),  # Normalize the image if your model was trained with normalization
         ])
@@ -72,6 +72,7 @@ class TouchDataModel:
         for pieces, lib in piece_lib_dict.items():
             all_pieces[pieces] = [self.transform(Image.open(f.path)) for f in os.scandir(lib) if
                                   f.is_file()]
+            all_pieces[pieces] = DataModel.grow_dataset(images=all_pieces[pieces], kernelshift=3, angles=2)
 
         with open(f'piece_lib_dict.pkl', 'wb') as f:  # open a text file
             pickle.dump({type_nr: piece_type for type_nr, piece_type in enumerate(piece_lib_dict.keys())}, f)
@@ -83,7 +84,7 @@ class TouchDataModel:
         my_dataset = PiecesDataset(data, labels_tensor)
 
         # Create a DataLoader
-        data_loader = DataLoader(my_dataset, batch_size=64, shuffle=True, num_workers=6)
+        data_loader = DataLoader(my_dataset, batch_size=16, shuffle=True, num_workers=2)
 
         # Assuming you have a DataLoader for your training data called trainloader
         for epoch in range(10):  # loop over the dataset multiple times
@@ -99,8 +100,8 @@ class TouchDataModel:
                 self.optimizer.step()
 
                 running_loss += loss.item()
-                if i % 100 == 99:  # print every 100 mini-batches
-                    print(f'[{epoch + 1}, {i + 1}]: loss: {running_loss / 100}')
+                if i % 1000 == 999:  # print every 100 mini-batches
+                    print(f'[{epoch + 1}, {i + 1}]: loss: {running_loss / 1000}')
                     running_loss = 0.0
 
         print('Finished Training')

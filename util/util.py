@@ -32,10 +32,12 @@ class Util:
                     if std_threshold > np.std(gaussian_filter(tile[4:tile_height-4, 4:tile_width-4], 7)):
                         continue
                 if classifier is not None and not conf.predict_dict == {}:
-                    predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1, -1))[0]
-                    predicted = conf.predict_dict[predicted]
+                    # predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1, -1))[0]
+                    # predicted = conf.predict_dict[predicted]
+                    predicted = conf.predict_dict[int(conf.dm.evaluate(tile))]
                     color = predicted.split("_")[0]
                     piece = predicted.split("_")[1]
+
                     cv.imwrite(f'out/{piece}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png', tile)
                 else:
                     cv.imwrite(f'{conf.export.output_str}_{letter}{y + 1}.png', tile)

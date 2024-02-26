@@ -8,7 +8,7 @@ from loguru import logger
 from config import BoardConfig, CLIArgs
 from util import BoardCalculations, Util
 from model.data_model import DataModel
-
+from model.pytorch_model import TouchDataModel
 
 def main(args: CLIArgs):
     conf = BoardConfig()
@@ -46,6 +46,7 @@ def run_images(source_images: list[str], conf: BoardConfig):
     for source_image in source_images:
         conf.set_export(source_image)
         conf.set_source_image(source_image)
+        conf.init_torch_model()
 
         image = cv.imread(source_image)
         image = cv.resize(image, (612, 792), interpolation=cv.INTER_LINEAR)
@@ -55,6 +56,7 @@ def run_images(source_images: list[str], conf: BoardConfig):
             board_image = BoardCalculations.find_board(image=image, conf=conf).board_image
             logger.info(f"printing board and pieces for {source_image}")
             cv.imwrite(f'{conf.export.output_str}_board.png', board_image)
+
             Util.print_tiles(board=board_image, conf=conf, classifier=clf)
         except IndexError:
             logger.error(f"{conf.source_image}: board out of scope:")

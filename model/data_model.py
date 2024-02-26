@@ -58,10 +58,10 @@ class DataModel:
             print(f"{name} : {score}")
 
     @staticmethod
-    def grow_dataset(images: list[np.ndarray]) -> list[np.ndarray]:
+    def grow_dataset(images: list[np.ndarray], kernelshift: int, angles:int) -> list[np.ndarray]:
 
-        kernels = DataModel.create_shift_kernels(5)
-        images = DataModel.grow_though_rotate(images=images, angle=4)
+        kernels = DataModel.create_shift_kernels(kernelshift)
+        images = DataModel.grow_though_rotate(images=images, angle=angles)
         return DataModel.grow_though_kernels(images=images, kernels=kernels)
 
     @staticmethod

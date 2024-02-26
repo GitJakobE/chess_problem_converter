@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import pickle
+from model.pytorch_model import TouchDataModel
 
 
 @dataclass
@@ -19,6 +20,11 @@ class BoardConfig:
     only_pieces: bool = True
     source_image = ""
     model = ""
+    dm = TouchDataModel()
+
+    def init_torch_model(self):
+        self.dm.init_torch_model()
+        self.dm.load_model()
 
     def set_source_image(self, filename: str):
         self.source_image = filename
