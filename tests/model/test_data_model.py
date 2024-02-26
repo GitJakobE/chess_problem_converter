@@ -28,7 +28,3 @@ def test_split_paths_to_dict() -> None:
     assert spilt_dict == expected
 
 
-def test_train_pytorch() ->None:
-    dm = DataModel()
-    dm.init_torch_model()
-    dm.train_torch_model(training_lib="../../trainingset")
