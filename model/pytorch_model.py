@@ -1,3 +1,4 @@
+from typing import List
 from PIL import Image
 import numpy as np
 import os
@@ -37,7 +38,7 @@ class SimpleCNN(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 12)  # Assuming 12 classes
+        self.fc3 = nn.Linear(84, 13)  # Assuming 12 classes
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -107,7 +108,7 @@ class TouchDataModel:
         print('Finished Training')
         torch.save(self.model.state_dict(), 'model_weights.pth')
 
-    def evaluate(self, image: np.ndarray):
+    def evaluate(self, image: np.ndarray) -> List[float]:
         self.model.eval()
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         image = Image.fromarray(image)
@@ -119,10 +120,10 @@ class TouchDataModel:
         # Convert probabilities to a Python list for easier interpretation
         probabilities_list = probabilities.squeeze().tolist()
 
-        # Printing the list of probabilities for each category
-        for idx, prob in enumerate(probabilities_list):
-            print(f"Category {idx}: Probability {prob:.4f}")
-        return probabilities.argmax(dim=1)
+        # # Printing the list of probabilities for each category
+        # for idx, prob in enumerate(probabilities_list):
+        #     print(f"Category {idx}: Probability {prob:.4f}")
+        return probabilities_list
 
     def save_model(self, name: str = 'model_weights.pth'):
         torch.save(self.model.state_dict(), name)

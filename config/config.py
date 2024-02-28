@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import pickle
-from model.pytorch_model import TouchDataModel
-
+from model import TouchDataModel
+import os
 
 @dataclass
 class Export:
@@ -31,7 +31,10 @@ class BoardConfig:
 
     def set_export(self, filename: str):
         filename = filename.split('/')[-1].split('\\')[-1]
-        self.export.output_str = f"./out/{filename.split('.')[0]}"
+        lib = filename.split('.')[0]
+        if not os.path.exists(f"./out/{lib}/"):
+            os.makedirs(f"./out/{lib}/")
+        self.export.output_str = f"./out/{lib}/{lib}"
 
     def read_predict_dict(self, filename: str = "piece_lib_dict.pkl"):
         with open(filename, 'rb') as f:  # open a text file

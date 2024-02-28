@@ -1,6 +1,7 @@
 import os
 import pickle
 import cv2 as cv
+import numpy as np
 
 from model.pytorch_model import TouchDataModel
 
@@ -31,5 +32,5 @@ def test_evaluate() -> None:
 
 
     image = cv.imread("..\\..\\out\\Toft-00-0000_b8.png")
-    lib = predict_dict[int(dm.evaluate(image=image))]
+    lib = predict_dict[np.argmax(dm.evaluate(image=image))]
     print(lib)

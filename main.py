@@ -32,7 +32,10 @@ def main(args: CLIArgs):
         run_images(source_images=source_images, conf=conf)
 
     if args.train_model:
-        DataModel.train_from_images()
+        dm = TouchDataModel()
+        dm.init_torch_model()
+        dm.train_torch_model(training_lib="trainingset")
+        dm.save_model()
 
 
 def run_images(source_images: list[str], conf: BoardConfig):
@@ -53,11 +56,12 @@ def run_images(source_images: list[str], conf: BoardConfig):
         logger.info(f"{source_image}: Printing board")
 
         try:
-            board_image = BoardCalculations.find_board(image=image, conf=conf).board_image
+            board = BoardCalculations.find_board(image=image, conf=conf)
             logger.info(f"printing board and pieces for {source_image}")
-            cv.imwrite(f'{conf.export.output_str}_board.png', board_image)
+            cv.imwrite(f'{conf.export.output_str}_board.png', board.board_image)
 
-            Util.print_tiles(board=board_image, conf=conf, classifier=clf)
+            Util.print_tiles(board=board, conf=conf, classifier=clf)
+            board.to_file(filename="out/setups.txt", board_name=conf.export.output_str)
         except IndexError:
             logger.error(f"{conf.source_image}: board out of scope:")
             continue

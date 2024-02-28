@@ -7,38 +7,43 @@ import numpy as np
 from math import pi
 from pdf2image import convert_from_path
 from loguru import logger
-from scipy.ndimage import gaussian_filter, rotate
+from scipy.ndimage import gaussian_filter, rotate, median_filter
 from sklearn import pipeline
 
-from . import Board
+from .board import Board, Piece, PieceTypes, Side
 from config import BoardConfig
 
 
 class Util:
     @staticmethod
-    def print_tiles(board: np.ndarray, conf: BoardConfig, classifier: pipeline = None) -> None:
+    def print_tiles(board: Board, conf: BoardConfig, classifier: pipeline = None) -> None:
         logger.debug(f"Printing tiles ")
-        board_height, board_width, _ = board.shape
+        board_height, board_width, _ = board.board_image.shape
         tile_width = board_width // 8
         tile_height = board_height // 8
         tol = 3
-        std_threshold = 20
+        std_threshold = 10
 
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
-                tile = board[board_height + tol - (y + 1) * tile_height:board_height - tol - y * tile_height,
+                tile = board.board_image[
+                       board_height + tol - (y + 1) * tile_height:board_height - tol - y * tile_height,
                        tile_width * n + tol:tile_width * (1 + n) - tol]
-                if (conf.only_pieces):
-                    if std_threshold > np.std(gaussian_filter(tile[4:tile_height-4, 4:tile_width-4], 7)):
-                        continue
-                if classifier is not None and not conf.predict_dict == {}:
-                    # predicted = classifier.predict(Util.img_to_parameter(tile).reshape(1, -1))[0]
-                    # predicted = conf.predict_dict[predicted]
-                    predicted = conf.predict_dict[int(conf.dm.evaluate(tile))]
-                    color = predicted.split("_")[0]
-                    piece = predicted.split("_")[1]
+                cv.imwrite(f'temp/{letter}{y + 1}.png', median_filter(tile[4:- 4, 4:- 4], 9))
 
-                    cv.imwrite(f'out/{piece}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png', tile)
+                if classifier is not None and not conf.predict_dict == {} and conf.only_pieces:
+                    probabilities = conf.dm.evaluate(tile)
+                    if max(probabilities)<0.85:
+                        continue
+                    predicted = conf.predict_dict[np.argmax(probabilities)]
+                    color = predicted.split("_")[0]
+                    piece_type = predicted.split("_")[1]
+                    piece = Piece(image=tile, piece_type=PieceTypes(piece_type),
+                                  side=Side(color), position=f"{letter}{y + 1}")
+
+                    cv.imwrite(f'out/{piece_type}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png', tile)
+                    cv.imwrite(f"{conf.export.output_str}_{color}_{piece_type}_{letter}{y + 1}.png", tile)
+                    board.pieces.append(piece)
                 else:
                     cv.imwrite(f'{conf.export.output_str}_{letter}{y + 1}.png', tile)
 
@@ -55,12 +60,12 @@ class Util:
         best_i = 0
         tol = 3
         startpos = height // 2
-        res=[]
+        res = []
 
-        while(startpos>0):
-            startpos-=tile_width
+        while (startpos > 0):
+            startpos -= tile_width
             # finding the best fit for the tiles
-            for i in range(-tile_width//2, tile_width//2):
+            for i in range(-tile_width // 2, tile_width // 2):
                 line_profile = image[startpos - tile_width // 2 + i:startpos + tile_width // 2 + i,
                                left_edge:right_edge]
                 tiles = []
@@ -74,7 +79,6 @@ class Util:
             startpos += best_i
             res.append(startpos)
         return res
-
 
     @staticmethod
     def _find_top_line(image: np.ndarray, left_edge: int, right_edge: int, tile_width: int,
