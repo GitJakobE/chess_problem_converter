@@ -1,8 +1,8 @@
-from typing import Optional
-from dataclasses import dataclass
 import pickle
-from model import TouchDataModel
 import os
+
+from dataclasses import dataclass
+from model import TouchDataModel
 
 @dataclass
 class Export:

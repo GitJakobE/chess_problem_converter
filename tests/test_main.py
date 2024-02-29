@@ -1,8 +1,9 @@
 import pytest
 
+import cv2 as cv
+
 from util import BoardCalculations, Board, Util
 from config import BoardConfig
-import cv2 as cv
 
 demos = [
     Board(name="Toft-00-0000.png", left_edge=46, right_edge=535, right_tilt_angle=0, left_tilt_angle=0, top_line=114,

@@ -7,7 +7,6 @@ from loguru import logger
 
 from config import BoardConfig, CLIArgs
 from util import BoardCalculations, Util
-from model.data_model import DataModel
 from model.pytorch_model import TouchDataModel
 
 def main(args: CLIArgs):

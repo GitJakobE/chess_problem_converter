@@ -80,20 +80,16 @@ class TouchDataModel:
         for pieces, lib in piece_lib_dict.items():
             all_pieces[pieces] = [self.train_transform(Image.open(f.path)) for f in os.scandir(lib) if
                                   f.is_file()]
-            # all_pieces[pieces] = DataModel.grow_dataset(images=all_pieces[pieces], kernelshift=3, angles=2)
-            # all_pieces[pieces] = [Image.fromarray(cv.cvtColor(img, cv.COLOR_BGR2RGB)) for img in all_pieces[pieces]]
-
 
         with open(f'piece_lib_dict.pkl', 'wb') as f:  # open a text file
             pickle.dump({type_nr: piece_type for type_nr, piece_type in enumerate(piece_lib_dict.keys())}, f)
 
         data, classification = DataModel.dict_to_datasets(piece_lib_dict=piece_lib_dict, all_pieces=all_pieces,
                                                           flatten=False)
-        # images_tensor = torch.tensor(data, dtype=torch.float32)
         labels_tensor = torch.tensor(classification, dtype=torch.long)
         my_dataset = PiecesDataset(data, labels_tensor)
 
-        data_loader = DataLoader(my_dataset, batch_size=16, shuffle=True, num_workers=2)
+        data_loader = DataLoader(my_dataset, batch_size=32, shuffle=True, num_workers=4)
 
         for epoch in range(40):
             running_loss = 0.0

@@ -1,6 +1,7 @@
-from enum import auto
-from strenum import StrEnum
 from typing import Optional
+from enum import auto
+
+from strenum import StrEnum
 import numpy as np
 from pydantic import BaseModel
 

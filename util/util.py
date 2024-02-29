@@ -1,5 +1,4 @@
 import matplotlib.pylab as plt
-
 import os
 
 import cv2 as cv
@@ -7,8 +6,8 @@ import numpy as np
 from math import pi
 from pdf2image import convert_from_path
 from loguru import logger
-from scipy.ndimage import gaussian_filter, rotate, median_filter
-from sklearn import pipeline
+from scipy.ndimage import gaussian_filter, rotate
+
 
 from .board import Board, Piece, PieceTypes, Side
 from config import BoardConfig
@@ -139,7 +138,6 @@ class Util:
                     topline, left_side = np.where(res == res.max())
         board.board_width = best_width * 8
         board.board_height = best_height * 8
-        # board.board_image = image[topline[0]:topline[0]+best_height*8,left_side[0]:left_side[0]+best_width*8]
         return topline[0], left_side[0]
 
     @staticmethod
@@ -237,7 +235,6 @@ class Util:
             right_max_derivative = np.max(derivative[150:])
 
             # If the new derivative is greater than the max, update the max derivative and angle
-            cv.imwrite(f'../out/test{angle}.png', rotated_profile)
             if left_max_derivative > left_max_derivative_value:
                 left_max_derivative_value = left_max_derivative
                 left_max_derivative_angle = angle

@@ -1,10 +1,11 @@
 import numpy as np
 from loguru import logger
-from config import BoardConfig
 import cv2 as cv
-from . import Util
 from scipy.ndimage import rotate
-from .board import Board
+
+from . import Util
+from board import Board
+from config import BoardConfig
 
 
 class BoardCalculations:
