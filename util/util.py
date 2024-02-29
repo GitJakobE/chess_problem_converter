@@ -31,6 +31,8 @@ class Util:
 
                 probabilities = conf.dm.evaluate(tile)
                 if max(probabilities)<0.4 or conf.predict_dict[np.argmax(probabilities)].split("_")[-1] == 'Empty':  # empty
+                    cv.imwrite(f'out/Empty/Black/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png',
+                               tile)
                     continue
                 predicted = conf.predict_dict[np.argmax(probabilities)]
                 color = predicted.split("_")[0]
