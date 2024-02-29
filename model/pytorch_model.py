@@ -33,12 +33,12 @@ class PiecesDataset(Dataset):
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 6, 5)  # Assuming RGB images
+        self.conv1 = nn.Conv2d(3, 6, 5)  # Assuming RGB images
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 13)  # Assuming 12 classes
+        self.fc3 = nn.Linear(84, 14)  # Assuming 12 classes
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -53,16 +53,23 @@ class SimpleCNN(nn.Module):
 class TouchDataModel:
 
     def init_torch_model(self):
-        # Instantiate your model, loss function, and optimizer
         self.model = SimpleCNN()
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.SGD(self.model.parameters(), lr=0.01, momentum=0.9)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
         self.tile_size = 32
+        self.train_transform = transforms.Compose([
+            transforms.Resize((self.tile_size, self.tile_size)),
+            # transforms.Grayscale(),
+            transforms.RandomRotation(3),
+            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),  # Random translation
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,)),
+        ])
         self.transform = transforms.Compose([
-            transforms.Resize((self.tile_size, self.tile_size)),  # Resize the image to 32x32
-            transforms.Grayscale(),  # Convert to grayscale if your model expects grayscale inputs
-            transforms.ToTensor(),  # Convert to a PyTorch tensor
-            transforms.Normalize((0.5,), (0.5,)),  # Normalize the image if your model was trained with normalization
+            transforms.Resize((self.tile_size, self.tile_size)),
+            # transforms.Grayscale(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,)),
         ])
 
     def train_torch_model(self, training_lib):
@@ -71,9 +78,11 @@ class TouchDataModel:
         piece_lib_dict = DataModel.split_paths_to_dict(paths=os.walk(training_lib))
         all_pieces = {}
         for pieces, lib in piece_lib_dict.items():
-            all_pieces[pieces] = [self.transform(Image.open(f.path)) for f in os.scandir(lib) if
+            all_pieces[pieces] = [self.train_transform(Image.open(f.path)) for f in os.scandir(lib) if
                                   f.is_file()]
-            all_pieces[pieces] = DataModel.grow_dataset(images=all_pieces[pieces], kernelshift=3, angles=2)
+            # all_pieces[pieces] = DataModel.grow_dataset(images=all_pieces[pieces], kernelshift=3, angles=2)
+            # all_pieces[pieces] = [Image.fromarray(cv.cvtColor(img, cv.COLOR_BGR2RGB)) for img in all_pieces[pieces]]
+
 
         with open(f'piece_lib_dict.pkl', 'wb') as f:  # open a text file
             pickle.dump({type_nr: piece_type for type_nr, piece_type in enumerate(piece_lib_dict.keys())}, f)
@@ -84,11 +93,9 @@ class TouchDataModel:
         labels_tensor = torch.tensor(classification, dtype=torch.long)
         my_dataset = PiecesDataset(data, labels_tensor)
 
-        # Create a DataLoader
         data_loader = DataLoader(my_dataset, batch_size=16, shuffle=True, num_workers=2)
 
-        # Assuming you have a DataLoader for your training data called trainloader
-        for epoch in range(10):  # loop over the dataset multiple times
+        for epoch in range(40):
             running_loss = 0.0
             for i, data in enumerate(data_loader):
                 inputs, labels = data
@@ -101,8 +108,8 @@ class TouchDataModel:
                 self.optimizer.step()
 
                 running_loss += loss.item()
-                if i % 1000 == 999:  # print every 100 mini-batches
-                    print(f'[{epoch + 1}, {i + 1}]: loss: {running_loss / 1000}')
+                if i % 100 == 99:  # print every 100 mini-batches
+                    print(f'[{epoch + 1}, {i + 1}]: loss: {running_loss / 100}')
                     running_loss = 0.0
 
         print('Finished Training')
@@ -117,13 +124,8 @@ class TouchDataModel:
         with torch.no_grad():  # No need to track gradients
             output = self.model(image_tensor)
         probabilities = torch.softmax(output, dim=1)
-        # Convert probabilities to a Python list for easier interpretation
-        probabilities_list = probabilities.squeeze().tolist()
 
-        # # Printing the list of probabilities for each category
-        # for idx, prob in enumerate(probabilities_list):
-        #     print(f"Category {idx}: Probability {prob:.4f}")
-        return probabilities_list
+        return probabilities.squeeze().tolist()
 
     def save_model(self, name: str = 'model_weights.pth'):
         torch.save(self.model.state_dict(), name)

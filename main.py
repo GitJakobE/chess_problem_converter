@@ -60,7 +60,7 @@ def run_images(source_images: list[str], conf: BoardConfig):
             logger.info(f"printing board and pieces for {source_image}")
             cv.imwrite(f'{conf.export.output_str}_board.png', board.board_image)
 
-            Util.print_tiles(board=board, conf=conf, classifier=clf)
+            Util.find_pieces(board=board, conf=conf)
             board.to_file(filename="out/setups.txt", board_name=conf.export.output_str)
         except IndexError:
             logger.error(f"{conf.source_image}: board out of scope:")

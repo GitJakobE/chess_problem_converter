@@ -16,36 +16,32 @@ from config import BoardConfig
 
 class Util:
     @staticmethod
-    def print_tiles(board: Board, conf: BoardConfig, classifier: pipeline = None) -> None:
+    def find_pieces(board: Board, conf: BoardConfig) -> None:
         logger.debug(f"Printing tiles ")
         board_height, board_width, _ = board.board_image.shape
         tile_width = board_width // 8
         tile_height = board_height // 8
         tol = 3
-        std_threshold = 10
 
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
                 tile = board.board_image[
                        board_height + tol - (y + 1) * tile_height:board_height - tol - y * tile_height,
                        tile_width * n + tol:tile_width * (1 + n) - tol]
-                cv.imwrite(f'temp/{letter}{y + 1}.png', median_filter(tile[4:- 4, 4:- 4], 9))
 
-                if classifier is not None and not conf.predict_dict == {} and conf.only_pieces:
-                    probabilities = conf.dm.evaluate(tile)
-                    if max(probabilities)<0.85:
-                        continue
-                    predicted = conf.predict_dict[np.argmax(probabilities)]
-                    color = predicted.split("_")[0]
-                    piece_type = predicted.split("_")[1]
-                    piece = Piece(image=tile, piece_type=PieceTypes(piece_type),
-                                  side=Side(color), position=f"{letter}{y + 1}")
+                probabilities = conf.dm.evaluate(tile)
+                if max(probabilities)<0.4 or conf.predict_dict[np.argmax(probabilities)].split("_")[-1] == 'Empty':  # empty
+                    continue
+                predicted = conf.predict_dict[np.argmax(probabilities)]
+                color = predicted.split("_")[0]
+                piece_type = predicted.split("_")[1]
+                piece = Piece(image=tile, piece_type=PieceTypes(piece_type),
+                              side=Side(color), position=f"{letter}{y + 1}", probabilities=probabilities)
 
-                    cv.imwrite(f'out/{piece_type}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png', tile)
-                    cv.imwrite(f"{conf.export.output_str}_{color}_{piece_type}_{letter}{y + 1}.png", tile)
-                    board.pieces.append(piece)
-                else:
-                    cv.imwrite(f'{conf.export.output_str}_{letter}{y + 1}.png', tile)
+                cv.imwrite(f'out/{piece_type}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png', tile)
+                cv.imwrite(f"{conf.export.output_str}_{color}_{piece_type}_{letter}{y + 1}.png", tile)
+                board.pieces.append(piece)
+                board.nr_of_pieces = len(board.pieces)
 
     @staticmethod
     def img_to_parameter(img: np.array):
@@ -126,6 +122,7 @@ class Util:
         bgr = np.percentile(image, 75)
         _, width = image.shape
         image[image[:, :] < bgr - 10] = bgr - 10
+
         best_res = -1000
         best_width = 0
         best_height = 0

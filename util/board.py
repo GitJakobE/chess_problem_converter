@@ -24,6 +24,7 @@ class Piece(BaseModel):
     position: str
     side: Side
     image: np.ndarray
+    probabilities: list[float]
 
     class Config:
         arbitrary_types_allowed = True
@@ -42,7 +43,7 @@ class Board(BaseModel):
     top_line: Optional[int] = None
     right_tilt_angle: Optional[int] = None
     left_tilt_angle: Optional[int] = None
-    nr_of_pieces : [int] =0
+    nr_of_pieces: Optional[int] =None
 
     class Config:
         arbitrary_types_allowed = True

@@ -19,3 +19,4 @@ out/board/*
 __pycache__/
 /temp/*
 /data/*
+/tests/out/*

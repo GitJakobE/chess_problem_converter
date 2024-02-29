@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 import pickle
 from model import TouchDataModel
@@ -22,9 +23,9 @@ class BoardConfig:
     model = ""
     dm = TouchDataModel()
 
-    def init_torch_model(self):
+    def init_torch_model(self, model_file_name: str = "model_weights.pth"):
         self.dm.init_torch_model()
-        self.dm.load_model()
+        self.dm.load_model(model_file_name)
 
     def set_source_image(self, filename: str):
         self.source_image = filename
