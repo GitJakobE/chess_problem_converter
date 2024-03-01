@@ -4,7 +4,7 @@ import cv2 as cv
 from scipy.ndimage import rotate
 
 from . import Util
-from board import Board
+from .board import Board
 from config import BoardConfig
 
 

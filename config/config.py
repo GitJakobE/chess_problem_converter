@@ -23,7 +23,7 @@ class BoardConfig:
     model = ""
     dm = TouchDataModel()
 
-    def init_torch_model(self, model_file_name: str = "model_weights.pth"):
+    def init_torch_model(self, model_file_name: str = "models/model_weights.pth"):
         self.dm.init_torch_model()
         self.dm.load_model(model_file_name)
 
@@ -37,6 +37,6 @@ class BoardConfig:
             os.makedirs(f"./out/{lib}/")
         self.export.output_str = f"./out/{lib}/{lib}"
 
-    def read_predict_dict(self, filename: str = "piece_lib_dict.pkl"):
+    def read_predict_dict(self, filename: str = "models/piece_lib_dict.pkl"):
         with open(filename, 'rb') as f:  # open a text file
             self.predict_dict = pickle.load(f)

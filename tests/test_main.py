@@ -36,8 +36,8 @@ def test_demos(demo: Board):
     conf = BoardConfig()
     conf.set_export(demo.name)
     conf.set_source_image(demo.name)
-    conf.init_torch_model('../model_weights.pth')
-    conf.read_predict_dict('../piece_lib_dict.pkl')
+    conf.init_torch_model('../models/model_weights.pth')
+    conf.read_predict_dict('../models/piece_lib_dict.pkl')
 
     board = BoardCalculations.find_board(image, conf)
     Util.find_pieces(board, conf)
