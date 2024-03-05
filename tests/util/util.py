@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-from util import Util
+from util import Util, Side, PieceTypes
 
 
 def test_convert_all_pdfs_in_paths():
@@ -16,7 +16,7 @@ def test_find_best_tile_line():
     image = np.ones((width, width, 1), )
 
     tile_width = 60
-    image = Util.create_board(image=image[:,:,2], tile_width=60, tile_height=60, bgr=254)
+    image = Util.create_board(image=image[:, :, 2], tile_width=60, tile_height=60, bgr=254)
 
     right_edge = width // 2 + 4 * tile_width
     left_edge = width // 2 - 4 * tile_width
@@ -46,3 +46,6 @@ def test_split_black_white_pieces():
         print(folder.path)
         Util.split_black_white_pieces(folder.path)
 
+
+def test_match_folders_to_piece_types():
+    assert len(Util.match_folders_to_piece_types("..\..\out")) == len(Side) * len(PieceTypes)

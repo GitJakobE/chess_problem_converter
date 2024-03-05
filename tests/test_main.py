@@ -2,8 +2,9 @@ import pytest
 
 import cv2 as cv
 
-from util import BoardCalculations, Board, Util
+from util import BoardCalculations, Board, Util, constants
 from config import BoardConfig
+
 
 demos = [
     Board(name="Toft-00-0000.png", left_edge=46, right_edge=535, right_tilt_angle=0, left_tilt_angle=0, top_line=114,
@@ -32,7 +33,7 @@ demos = [
 @pytest.mark.parametrize("demo", demos)
 def test_demos(demo: Board):
     image = cv.imread(f"../Demos/{demo.name}")
-    image = cv.resize(image, (612, 792), interpolation=cv.INTER_LINEAR)
+    image = cv.resize(image, constants.standard_image_dim, interpolation=cv.INTER_LINEAR)
     conf = BoardConfig()
     conf.set_export(demo.name)
     conf.set_source_image(demo.name)

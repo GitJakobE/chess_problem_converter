@@ -1,5 +1,6 @@
 import matplotlib.pylab as plt
 import os
+from typing import Dict, Tuple
 
 import cv2 as cv
 import numpy as np
@@ -8,9 +9,9 @@ from pdf2image import convert_from_path
 from loguru import logger
 from scipy.ndimage import gaussian_filter, rotate
 
-
 from .board import Board, Piece, PieceTypes, Side
 from config import BoardConfig
+from . import constants
 
 
 class Util:
@@ -29,20 +30,23 @@ class Util:
                        tile_width * n + tol:tile_width * (1 + n) - tol]
 
                 probabilities = conf.dm.evaluate(tile)
-                if max(probabilities)<0.4 or conf.predict_dict[np.argmax(probabilities)].split("_")[-1] == 'Empty':  # empty
+                if max(probabilities) < 0.4 or conf.predict_dict[np.argmax(probabilities)].split("_")[
+                    -1] == 'Empty':  # empty
                     cv.imwrite(f'out/Empty/Black/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png',
                                tile)
                     continue
                 predicted = conf.predict_dict[np.argmax(probabilities)]
                 color = predicted.split("_")[0]
                 piece_type = predicted.split("_")[1]
-                piece = Piece(image=tile, piece_type=PieceTypes(piece_type),
+                piece = Piece(image=tile, piece_type=PieceTypes[piece_type],
                               side=Side(color), position=f"{letter}{y + 1}", probabilities=probabilities)
 
-                cv.imwrite(f'out/{piece_type}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png', tile)
+                cv.imwrite(f'out/{piece_type}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png',
+                           tile)
                 cv.imwrite(f"{conf.export.output_str}_{color}_{piece_type}_{letter}{y + 1}.png", tile)
                 board.pieces.append(piece)
                 board.nr_of_pieces = len(board.pieces)
+                board.fen_board[n][y] = PieceTypes[piece_type].value
 
     @staticmethod
     def img_to_parameter(img: np.array):
@@ -277,24 +281,30 @@ class Util:
 
     @staticmethod
     def convert_pdf_to_pngs(in_path: str, out_path: str = "") -> None:
-        image_dict = Util.convert_all_pdfs_in_paths(in_path)
         if out_path == "":
             out_path = in_path + "/png"
             if not os.path.exists(out_path):
                 os.makedirs(out_path)
+        filenames = Util.get_all_pdfs_filenames_in_paths(in_path)
 
-        for filename, pages in image_dict.items():
-            for n, page in enumerate(pages):
-                out_filename = filename.replace(in_path, out_path)
-                if n == 0:
-                    out_filename = out_filename.replace(".pdf", f".png")
-                    page.save(out_filename)
+        for filename in filenames:
+            try:
+                pages = convert_from_path(filename, 600)
+                for n, page in enumerate(pages):
+                    out_filename = filename.replace(in_path, out_path)
+
+                    if n == 0:
+                        out_filename = out_filename.replace(".pdf", f".png")
+                        page.resize(constants.standard_image_dim)
+                        page.save(out_filename)
+                    logger.info(f"converted: {filename} to {out_filename}")
+            except Exception as e:
+                logger.error(f"Error in {filename}: {e}")
 
     @staticmethod
-    def convert_all_pdfs_in_paths(path: str) -> dict[str, list[np.ndarray]]:
+    def get_all_pdfs_filenames_in_paths(path: str) -> list[str]:
 
-        return {filename.path: convert_from_path(filename.path, 400) for filename in os.scandir(path) if
-                filename.path.endswith(".pdf")}
+        return [filename.path for filename in os.scandir(path) if filename.path.endswith(".pdf")]
 
     @staticmethod
     def draw_locations(target_image, locations):
@@ -372,3 +382,13 @@ class Util:
                             tile_color = black
                         image[start_y + y + tile_y * tile_height][start_x + x + tile_x * tile_width] = base_tile_color
         return image
+
+    @staticmethod
+    def match_folders_to_piece_types(path: str) -> Dict[Tuple[Side, PieceTypes], str]:
+        res = {}
+        for dir in os.scandir(path=path):
+            if dir.is_dir() and dir.name in PieceTypes.__members__:
+                for subdir in os.scandir(path=dir):
+                    if subdir.is_dir() and subdir.name in Side.__members__:
+                        res[(Side[subdir.name], PieceTypes[dir.name])] = subdir.path
+        return res

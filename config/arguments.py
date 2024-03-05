@@ -11,6 +11,7 @@ class CLIArgs:
     model: Optional[str]
     convert_pdfs: Optional[str]
     train_model: bool = False
+    verify: bool = False
 
     @staticmethod
     def from_namespace(name_space: Namespace) -> "CLIArgs":

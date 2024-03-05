@@ -6,8 +6,9 @@ import cv2 as cv
 from loguru import logger
 
 from config import BoardConfig, CLIArgs
-from util import BoardCalculations, Util
+from util import BoardCalculations, Util, constants
 from model.pytorch_model import TouchDataModel
+
 
 def main(args: CLIArgs):
     conf = BoardConfig()
@@ -24,6 +25,7 @@ def main(args: CLIArgs):
     if args.input_file is not None:
         source_images = [filename.path for filename in os.scandir("data/") if filename.path.endswith(".png")]
 
+    if args.verify:
 
 
     if args.model is not None:
@@ -51,14 +53,16 @@ def run_images(source_images: list[str], conf: BoardConfig):
         conf.init_torch_model()
 
         image = cv.imread(source_image)
-        image = cv.resize(image, (612, 792), interpolation=cv.INTER_LINEAR)
-        logger.info(f"{source_image}: Printing board")
+        if constants.standard_image_dim != image.shape[:-1]:
+            logger.info(f"{source_image}: Resizing the image constants.standard_image_dim")
+            image = cv.resize(image, constants.standard_image_dim, interpolation=cv.INTER_LINEAR)
 
         try:
+            logger.info(f"{source_image}: Finding the board: ")
             board = BoardCalculations.find_board(image=image, conf=conf)
-            logger.info(f"printing board and pieces for {source_image}")
             cv.imwrite(f'{conf.export.output_str}_board.png', board.board_image)
 
+            logger.info(f"{source_image}: Finding the pieces")
             Util.find_pieces(board=board, conf=conf)
             board.to_file(filename="out/setups.txt", board_name=conf.export.output_str)
         except IndexError:
@@ -66,6 +70,25 @@ def run_images(source_images: list[str], conf: BoardConfig):
             continue
         except Exception as e:
             logger.error(f"{conf.source_image} error in finding board: {e}")
+
+
+def verify(path:str, conf: BoardConfig):
+    for
+    try:
+        with open(f"models/{conf.model}.pkl", 'rb') as f:  # open a text file
+            clf = pickle.load(f)
+    except Exception as e:
+        logger.error(f"Error loading the model: {e}")
+        raise FileNotFoundError
+
+    for source_image in source_images:
+        conf.set_export(source_image)
+        conf.set_source_image(source_image)
+        conf.init_torch_model()
+
+        image = cv.imread(source_image)
+
+
 
 
 def parse_arguments():
@@ -99,15 +122,21 @@ def parse_arguments():
         required=False,
     )
 
-
     parser.add_argument(
         "-c",
         "--convert-pdfs",
-        type= str,
+        type=str,
         help="used to convert the pdf files in a directory to png",
         required=False
     )
 
+    parser.add_argument(
+        "-v",
+        "--verify",
+        type=str,
+        help="verify the output folders",
+        required=False
+    )
 
     return CLIArgs.from_namespace(parser.parse_args())
 
