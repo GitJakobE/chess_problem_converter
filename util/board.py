@@ -39,11 +39,11 @@ class Board(BaseModel):
     board_height: Optional[int] = None
     rotated_image: Optional[np.ndarray] = None
     board_image: Optional[np.ndarray] = None
-    left_edge: Optional[int] = None
-    right_edge: Optional[int] = None
+    l_edge: Optional[int] = None
+    r_edge: Optional[int] = None
     top_line: Optional[int] = None
-    right_tilt_angle: Optional[int] = None
-    left_tilt_angle: Optional[int] = None
+    r_tilt_angle: Optional[int] = None
+    l_tilt_angle: Optional[int] = None
     nr_of_pieces: Optional[int] = None
     fen_board: Optional[np.chararray] = np.full((8, 8), "")
 

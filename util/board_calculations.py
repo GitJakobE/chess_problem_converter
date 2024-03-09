@@ -21,9 +21,9 @@ class BoardCalculations:
 
         # find the tilt of the board
         right_angle, left_angle = Util.find_tilt_angle(res_image, conf.line_profile_width, conf.gaussian_sigma, 10)
-        board.right_tilt_angle, board.left_tilt_angle = BoardCalculations.set_to_min(right_angle, left_angle, 1.0)
+        board.r_tilt_angle, board.l_tilt_angle = BoardCalculations.set_to_min(right_angle, left_angle, 1.0)
 
-        board.rotated_image = rotate(res_image, (board.right_tilt_angle + board.left_tilt_angle) / 2, reshape=False)
+        board.rotated_image = rotate(res_image, (board.r_tilt_angle + board.l_tilt_angle) / 2, reshape=False)
 
         logger.info(f"{conf.source_image}: Printing full rotated board")
         cv.imwrite(f'{conf.export.output_str}_full_rotated.png', board.rotated_image)
@@ -31,16 +31,16 @@ class BoardCalculations:
 
         # find the top/bottom of the board
         Util.find_top_line(board.rotated_image, board)
-        logger.info(f"{conf.source_image}: Left_edge: {board.left_edge}, Right_edge:{board.right_edge}")
+        logger.info(f"{conf.source_image}: Left_edge: {board.l_edge}, Right_edge:{board.r_edge}")
 
         logger.info(
             f"{conf.source_image}: top line: {board.top_line}. Bottom line: {board.top_line + board.board_width}")
         if board.top_line < 0 or board.top_line + board.board_width > board.rotated_image.shape[0]:
             raise IndexError("The board is out of range")
-        res_image = rotate(image, (board.right_tilt_angle + board.left_tilt_angle) / 2, reshape=False)
+        res_image = rotate(image, (board.r_tilt_angle + board.l_tilt_angle) / 2, reshape=False)
         board_edge = 0
         board.board_image = res_image[board.top_line + board_edge:board.top_line + board.board_height - board_edge,
-                            board.left_edge + board_edge:board.right_edge - board_edge]
+                            board.l_edge + board_edge:board.r_edge - board_edge]
         cv.imwrite(f'{conf.export.output_str}_board.png', board.board_image)
         return board
 

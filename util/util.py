@@ -30,8 +30,7 @@ class Util:
                        tile_width * n + tol:tile_width * (1 + n) - tol]
 
                 probabilities = conf.dm.evaluate(tile)
-                if max(probabilities) < 0.4 or conf.predict_dict[np.argmax(probabilities)].split("_")[
-                    -1] == 'Empty':  # empty
+                if max(probabilities) < 0.4 or conf.predict_dict[np.argmax(probabilities)].split("_")[-1] == 'Empty':
                     cv.imwrite(f'out/Empty/Black/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png',
                                tile)
                     continue
@@ -131,8 +130,9 @@ class Util:
         best_res = -1000
         best_width = 0
         best_height = 0
-        for tile_width in range(60, 69):
-            for tile_height in range(60, 69):
+        for tile_width in [45, 50, 60, 62, 65, 68]:
+            for tile_height in [45, 50, 60, 62, 65, 68]:
+
                 template = np.full((tile_height * 8, tile_width * 8), bgr)
                 template = Util.create_board(template, tile_width, tile_height, bgr)
                 res = cv.matchTemplate(image, template.astype(np.uint8), cv.TM_CCOEFF_NORMED)
@@ -152,9 +152,9 @@ class Util:
         bottom_cut = 100
         top, leftside = Util.locate_board_from_template(
             image=image[top_cut:height - bottom_cut, side_cut:width - side_cut, 2], board=board)
-        board.left_edge = side_cut + leftside
+        board.l_edge = side_cut + leftside
         board.top_line = top + top_cut
-        board.right_edge = board.left_edge + board.board_width
+        board.r_edge = board.l_edge + board.board_width
         return top, leftside
 
     @staticmethod
