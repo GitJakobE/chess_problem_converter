@@ -14,10 +14,10 @@ class Side(StrEnum):
 class PieceTypes(StrEnum):
     King = "K"
     Queen = "Q"
-    Rock = "R"
+    Rook = "R"
     Bishop = "B"
     Knight = "N"
-    Peon = "P"
+    Pawn = "P"
 
 
 class Piece(BaseModel):

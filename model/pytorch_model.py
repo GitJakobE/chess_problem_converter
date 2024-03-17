@@ -60,6 +60,7 @@ class TouchDataModel:
         self.train_transform = transforms.Compose([
             transforms.Resize((self.tile_size, self.tile_size)),
             # transforms.Grayscale(),
+            # transforms.RandomResizedCrop(scale=)
             transforms.RandomRotation(3),
             transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),  # Random translation
             transforms.ToTensor(),
@@ -91,7 +92,7 @@ class TouchDataModel:
 
         data_loader = DataLoader(my_dataset, batch_size=32, shuffle=True, num_workers=4)
 
-        for epoch in range(40):
+        for epoch in range(100):
             running_loss = 0.0
             for i, data in enumerate(data_loader):
                 inputs, labels = data

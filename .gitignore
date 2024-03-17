@@ -13,9 +13,9 @@ out/board/*
 /trainingset/Empty/
 /trainingset/King/
 /trainingset/Knight/
-/trainingset/Peon/
+/trainingset/Pawn/
 /trainingset/Queen/
-/trainingset/Rock/
+/trainingset/Rook/
 __pycache__/
 /temp/*
 /data/*

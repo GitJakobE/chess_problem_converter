@@ -16,15 +16,15 @@ def test_piece_types() -> None:
     king_test = PieceTypes("King")
     queen_test = PieceTypes("Queen")
     bishop_test = PieceTypes("Bishop")
-    rock_test = PieceTypes("Rock")
+    rook_test = PieceTypes("Rook")
     knight_test = PieceTypes("Knight")
-    peon_test = PieceTypes("Peon")
+    pawn_test = PieceTypes("Pawn")
     assert queen_test.name == "King"
     assert king_test.name == "Queen"
     assert bishop_test.name == "Bishop"
-    assert rock_test.name == "Rock"
+    assert rook_test.name == "Rook"
     assert knight_test.name == "Knight"
-    assert peon_test.name == "Peon"
+    assert pawn_test.name == "Pawn"
 
 
 def test_pieces() -> None:

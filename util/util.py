@@ -39,7 +39,8 @@ class Util:
                 piece_type = predicted.split("_")[1]
                 piece = Piece(image=tile, piece_type=PieceTypes[piece_type],
                               side=Side(color), position=f"{letter}{y + 1}", probabilities=probabilities)
-
+                if not os.path.exists(f'out/{piece_type}/{color}'):
+                    os.makedirs(f'out/{piece_type}/{color}')
                 cv.imwrite(f'out/{piece_type}/{color}/{conf.export.output_str.split("/")[-1]}_{letter}{y + 1}.png',
                            tile)
                 cv.imwrite(f"{conf.export.output_str}_{color}_{piece_type}_{letter}{y + 1}.png", tile)
@@ -130,8 +131,8 @@ class Util:
         best_res = -1000
         best_width = 0
         best_height = 0
-        for tile_width in [45, 50, 60, 62, 65, 68]:
-            for tile_height in [45, 50, 60, 62, 65, 68]:
+        for tile_width in [45, 50, 60, 62, 63, 65, 68]:
+            for tile_height in [45, 50, 60, 62, 63, 65, 68]:
 
                 template = np.full((tile_height * 8, tile_width * 8), bgr)
                 template = Util.create_board(template, tile_width, tile_height, bgr)
