@@ -21,7 +21,7 @@ class Util:
         board_height, board_width, _ = board.board_image.shape
         tile_width = board_width // 8
         tile_height = board_height // 8
-        tol = 3
+        tol = 0
 
         for y in range(8):
             for n, letter in enumerate(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']):
@@ -131,8 +131,10 @@ class Util:
         best_res = -1000
         best_width = 0
         best_height = 0
-        for tile_width in [45, 50, 60, 62, 63, 65, 68]:
-            for tile_height in [45, 50, 60, 62, 63, 65, 68]:
+
+        known_combies = [(w,h) for w in range(60,69) for h in range(60,63)]
+        known_combies.extend([(45, 45), (50, 50)])
+        for tile_width,tile_height in known_combies:
 
                 template = np.full((tile_height * 8, tile_width * 8), bgr)
                 template = Util.create_board(template, tile_width, tile_height, bgr)

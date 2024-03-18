@@ -6,7 +6,7 @@ import pickle
 
 import cv2 as cv
 from loguru import logger
-import torchvision.transforms as transforms
+import torchvision.transforms as tf
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -57,20 +57,21 @@ class TouchDataModel:
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
         self.tile_size = 32
-        self.train_transform = transforms.Compose([
-            transforms.Resize((self.tile_size, self.tile_size)),
+        self.train_transform = tf.Compose([
+            tf.Resize((self.tile_size, self.tile_size)),
             # transforms.Grayscale(),
-            # transforms.RandomResizedCrop(scale=)
-            transforms.RandomRotation(3),
-            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),  # Random translation
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,)),
+            tf.RandomApply(transforms=[
+                tf.RandomResizedCrop(size=(self.tile_size, self.tile_size), scale=(0.1, 0.9), ratio=(0.9, 1.1))], p=0.1),
+            tf.RandomRotation(3),
+            tf.RandomAffine(degrees=0, translate=(0.1, 0.1)),  # Random translation
+            tf.ToTensor(),
+            tf.Normalize((0.5,), (0.5,)),
         ])
-        self.transform = transforms.Compose([
-            transforms.Resize((self.tile_size, self.tile_size)),
+        self.transform = tf.Compose([
+            tf.Resize((self.tile_size, self.tile_size)),
             # transforms.Grayscale(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,)),
+            tf.ToTensor(),
+            tf.Normalize((0.5,), (0.5,)),
         ])
 
     def train_torch_model(self, training_lib):

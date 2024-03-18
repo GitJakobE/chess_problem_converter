@@ -23,7 +23,7 @@ class BoardCalculations:
         right_angle, left_angle = Util.find_tilt_angle(res_image, conf.line_profile_width, conf.gaussian_sigma, 10)
         board.r_tilt_angle, board.l_tilt_angle = BoardCalculations.set_to_min(right_angle, left_angle, 1.0)
 
-        board.rotated_image = rotate(res_image, (board.r_tilt_angle + board.l_tilt_angle) / 2, reshape=False)
+        board.rotated_image = rotate(image, (board.r_tilt_angle + board.l_tilt_angle) / 2, reshape=False)
 
         logger.info(f"{conf.source_image}: Printing full rotated board")
         cv.imwrite(f'{conf.export.output_str}_full_rotated.png', board.rotated_image)
