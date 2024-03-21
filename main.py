@@ -58,13 +58,11 @@ def run_images(source_images: list[str], conf: BoardConfig):
         if constants.standard_image_dim != image.shape[:-1]:
             logger.info(f"{source_image}: Resizing the image constants.standard_image_dim")
             image = cv.resize(image, constants.standard_image_dim, interpolation=cv.INTER_LINEAR)
-
         try:
-            logger.info(f"{source_image}: Finding the board: ")
+
             board = BoardCalculations.find_board(image=image, conf=conf)
             cv.imwrite(f'{conf.export.output_str}_board.png', board.board_image)
 
-            logger.info(f"{source_image}: Finding the pieces")
             Util.find_pieces(board=board, conf=conf)
             board.to_file(filename="out/setups.txt", board_name=conf.export.output_str)
         except IndexError:

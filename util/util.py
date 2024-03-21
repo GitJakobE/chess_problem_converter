@@ -17,7 +17,7 @@ from . import constants
 class Util:
     @staticmethod
     def find_pieces(board: Board, conf: BoardConfig) -> None:
-        logger.debug(f"Printing tiles ")
+        logger.info(f"{conf.source_image}: Finding the pieces")
         board_height, board_width, _ = board.board_image.shape
         tile_width = board_width // 8
         tile_height = board_height // 8
@@ -46,7 +46,8 @@ class Util:
                 cv.imwrite(f"{conf.export.output_str}_{color}_{piece_type}_{letter}{y + 1}.png", tile)
                 board.pieces.append(piece)
                 board.nr_of_pieces = len(board.pieces)
-                board.fen_board[n][y] = PieceTypes[piece_type].value
+                fen_value = PieceTypes[piece_type].value if color == "White" else PieceTypes[piece_type].value.lower()
+                board.fen_board[y][n] = fen_value
 
     @staticmethod
     def img_to_parameter(img: np.array):

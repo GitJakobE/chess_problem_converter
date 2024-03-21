@@ -12,6 +12,7 @@ class BoardCalculations:
 
     @staticmethod
     def find_board(image: np.ndarray, conf: BoardConfig) -> Board:
+        logger.info(f"{conf.source_image}: Finding the board: ")
         """finds the board and returns it with the cal. images"""
         cv.imwrite(f'{conf.export.output_str}_image_org.png', image)
 
