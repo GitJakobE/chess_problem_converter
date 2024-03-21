@@ -95,7 +95,7 @@ def verify(path: str, conf: BoardConfig):
             dict_of_probabilities[filename] = probabilities
         sorted_dict = sorted(dict_of_probabilities.items(), key=lambda x:max(x[1]))
         for key, item in sorted_dict:
-            if(max(item)<0.95):
+            if(max(item)<0.995):
                 print(f"{key.path}: {max(item)}")
                 mistake_folder = key.path.replace(key.name, "uncertain\\")
                 if not os.path.exists(mistake_folder):
